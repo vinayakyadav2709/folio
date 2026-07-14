@@ -1,76 +1,60 @@
-import { useEffect, useState } from 'react'
-import { useMutation, useQuery } from 'convex/react'
+import { useState } from 'react'
+import { useMutation } from 'convex/react'
 import { api } from '@folio/backend/api'
-import type { Doc } from '@folio/backend/dataModel'
 import { AtSignIcon, CheckIcon, GraduationCapIcon, PlusIcon, XIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CopyLinkButton } from '@/components/shared/copy-link-button'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
 import { errorMessage } from '../lib/errors'
+import { EMPTY_EDU, type ProfileForm, useSectionSave } from '../lib/use-profile-form'
 
-// Skills/education are edited as flat local rows; items are a comma-separated
-// string in the UI and split on save (the shape the ATS template wants).
-type SkillRow = { category: string; itemsText: string }
-type EducationRow = {
-  school: string
-  degree: string
-  location: string
-  startDate: string
-  endDate: string
-  gpa: string
-}
-
-const EMPTY_EDU: EducationRow = {
-  school: '',
-  degree: '',
-  location: '',
-  startDate: '',
-  endDate: '',
-  gpa: '',
-}
-
-export function ProfileCard() {
-  const profile = useQuery(api.profiles.getMyProfile)
-
+export function PanelHeader({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow: string
+  title: string
+  description: string
+}) {
   return (
-    <div className="mx-auto w-full max-w-2xl">
-      <header>
-        <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.3em]">
-          Settings · Profile
-        </div>
-        <h1 className="mt-1 font-heading font-semibold text-2xl tracking-tight">Your profile</h1>
-        <p className="mt-1.5 max-w-prose text-pretty text-muted-foreground text-sm leading-relaxed">
-          The single source of truth your resumes and public page pull from — identity, contact,
-          skills, and education, shaped for an ATS-friendly resume.
-        </p>
-      </header>
+    <header className="border-border/60 border-b pb-6">
+      <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.3em]">
+        {eyebrow}
+      </div>
+      <h1 className="mt-1 font-heading font-semibold text-2xl tracking-tight">{title}</h1>
+      <p className="mt-1.5 max-w-prose text-pretty text-muted-foreground text-sm leading-relaxed">
+        {description}
+      </p>
+    </header>
+  )
+}
 
-      {profile === undefined ? (
-        <div className="mt-6 flex flex-col gap-3">
-          <Skeleton className="h-10 w-full rounded-lg" />
-          <Skeleton className="h-40 w-full rounded-xl" />
-        </div>
-      ) : (
-        <div className="mt-6 flex flex-col gap-8">
-          <UsernameSection current={profile?.username ?? ''} />
-          <ProfileForm profile={profile} />
-        </div>
+function SaveRow({
+  label,
+  save,
+}: {
+  label: string
+  save: () => Promise<unknown>
+}) {
+  const { saving, saved, error, run } = useSectionSave()
+  return (
+    <div className="flex items-center gap-3 pt-2">
+      <Button onClick={() => run(save)} loading={saving}>
+        {label}
+      </Button>
+      {saved && (
+        <span className="inline-flex items-center gap-1 text-emerald-600 text-sm dark:text-emerald-400">
+          <CheckIcon className="size-3.5" /> Saved
+        </span>
       )}
+      {error && <p className="text-destructive text-sm text-pretty">{error}</p>}
     </div>
   )
 }
 
-function SectionHeading({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="font-mono text-[10px] text-muted-foreground/80 uppercase tracking-[0.2em]">
-      {children}
-    </h2>
-  )
-}
-
+// Username has its own guarded mutation, separate from the profile upsert.
 function UsernameSection({ current }: { current: string }) {
   const setUsername = useMutation(api.profiles.setUsername)
   const [value, setValue] = useState(current)
@@ -96,9 +80,8 @@ function UsernameSection({ current }: { current: string }) {
 
   return (
     <section className="flex flex-col gap-3">
-      <SectionHeading>Username</SectionHeading>
       <Field>
-        <FieldLabel className="sr-only">Username</FieldLabel>
+        <FieldLabel>Username</FieldLabel>
         <div className="flex items-start gap-2">
           <div className="relative flex-1">
             <AtSignIcon className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-2.5 size-3.5 text-muted-foreground" />
@@ -134,160 +117,125 @@ function UsernameSection({ current }: { current: string }) {
   )
 }
 
-function ProfileForm({ profile }: { profile: Doc<'profiles'> | null }) {
-  const update = useMutation(api.profiles.updateMyProfile)
-
-  const [fullName, setFullName] = useState('')
-  const [headline, setHeadline] = useState('')
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
-  const [location, setLocation] = useState('')
-  const [githubUrl, setGithubUrl] = useState('')
-  const [linkedinUrl, setLinkedinUrl] = useState('')
-  const [websiteUrl, setWebsiteUrl] = useState('')
-  const [skills, setSkills] = useState<SkillRow[]>([])
-  const [education, setEducation] = useState<EducationRow[]>([])
-
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  // Seed local state once the profile arrives (and whenever a server refresh
-  // lands — the key here is the profile id so this only reseeds on identity).
-  useEffect(() => {
-    setFullName(profile?.fullName ?? '')
-    setHeadline(profile?.headline ?? '')
-    setEmail(profile?.email ?? '')
-    setPhone(profile?.phone ?? '')
-    setLocation(profile?.location ?? '')
-    setGithubUrl(profile?.githubUrl ?? '')
-    setLinkedinUrl(profile?.linkedinUrl ?? '')
-    setWebsiteUrl(profile?.websiteUrl ?? '')
-    setSkills((profile?.skills ?? []).map((s) => ({ category: s.category, itemsText: s.items.join(', ') })))
-    setEducation(
-      (profile?.education ?? []).map((e) => ({
-        school: e.school,
-        degree: e.degree ?? '',
-        location: e.location ?? '',
-        startDate: e.startDate ?? '',
-        endDate: e.endDate ?? '',
-        gpa: e.gpa ?? '',
-      })),
-    )
-  }, [profile?._id])
-
-  async function onSave() {
-    setError(null)
-    setSaved(false)
-    setSaving(true)
-    try {
-      await update({
-        fullName: fullName.trim() || undefined,
-        headline: headline.trim() || undefined,
-        email: email.trim() || undefined,
-        phone: phone.trim() || undefined,
-        location: location.trim() || undefined,
-        githubUrl: githubUrl.trim() || undefined,
-        linkedinUrl: linkedinUrl.trim() || undefined,
-        websiteUrl: websiteUrl.trim() || undefined,
-        skills: skills
-          .map((s) => ({
-            category: s.category.trim(),
-            items: s.itemsText
-              .split(',')
-              .map((i) => i.trim())
-              .filter(Boolean),
-          }))
-          .filter((s) => s.category && s.items.length > 0),
-        education: education
-          .map((e) => ({
-            school: e.school.trim(),
-            degree: e.degree.trim() || undefined,
-            location: e.location.trim() || undefined,
-            startDate: e.startDate.trim() || undefined,
-            endDate: e.endDate.trim() || undefined,
-            gpa: e.gpa.trim() || undefined,
-          }))
-          .filter((e) => e.school),
-      })
-      setSaved(true)
-    } catch (err) {
-      setError(errorMessage(err))
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  function setEdu(i: number, patch: Partial<EducationRow>) {
-    setEducation((rows) => rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)))
-  }
-
+export function ProfileSection({ form, username }: { form: ProfileForm; username: string }) {
+  const { fields, set } = form
   return (
     <div className="flex flex-col gap-8">
-      {/* Identity */}
+      <PanelHeader
+        eyebrow="Settings · Profile"
+        title="Your profile"
+        description="Your public handle and the identity your resumes and public page pull from."
+      />
+      <UsernameSection current={username} />
       <section className="flex flex-col gap-3">
-        <SectionHeading>Identity</SectionHeading>
         <Field>
           <FieldLabel>Full name</FieldLabel>
-          <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Ada Lovelace" />
+          <Input
+            value={fields.fullName}
+            onChange={(e) => set({ fullName: e.target.value })}
+            placeholder="Ada Lovelace"
+          />
         </Field>
         <Field>
           <FieldLabel>Headline</FieldLabel>
           <Input
-            value={headline}
-            onChange={(e) => setHeadline(e.target.value)}
+            value={fields.headline}
+            onChange={(e) => set({ headline: e.target.value })}
             placeholder="Backend engineer · distributed systems"
           />
         </Field>
+        <SaveRow label="Save profile" save={form.saveIdentity} />
       </section>
+    </div>
+  )
+}
 
-      <Separator />
-
-      {/* Contact & links */}
+export function ContactSection({ form }: { form: ProfileForm }) {
+  const { fields, set } = form
+  return (
+    <div className="flex flex-col gap-8">
+      <PanelHeader
+        eyebrow="Settings · Contact"
+        title="Contact & links"
+        description="How people reach you, and where your work lives online."
+      />
       <section className="flex flex-col gap-3">
-        <SectionHeading>Contact &amp; links</SectionHeading>
         <div className="grid gap-3 sm:grid-cols-2">
           <Field>
             <FieldLabel>Email</FieldLabel>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ada@example.com" />
+            <Input
+              type="email"
+              value={fields.email}
+              onChange={(e) => set({ email: e.target.value })}
+              placeholder="ada@example.com"
+            />
           </Field>
           <Field>
             <FieldLabel>Phone</FieldLabel>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 555 0100" />
+            <Input
+              value={fields.phone}
+              onChange={(e) => set({ phone: e.target.value })}
+              placeholder="+1 555 0100"
+            />
           </Field>
         </div>
         <Field>
           <FieldLabel>Location</FieldLabel>
-          <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Berlin, DE" />
+          <Input
+            value={fields.location}
+            onChange={(e) => set({ location: e.target.value })}
+            placeholder="Berlin, DE"
+          />
         </Field>
         <div className="grid gap-3 sm:grid-cols-3">
           <Field>
             <FieldLabel>GitHub</FieldLabel>
-            <Input value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} placeholder="https://github.com/…" />
+            <Input
+              value={fields.githubUrl}
+              onChange={(e) => set({ githubUrl: e.target.value })}
+              placeholder="https://github.com/…"
+            />
           </Field>
           <Field>
             <FieldLabel>LinkedIn</FieldLabel>
-            <Input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder="https://linkedin.com/in/…" />
+            <Input
+              value={fields.linkedinUrl}
+              onChange={(e) => set({ linkedinUrl: e.target.value })}
+              placeholder="https://linkedin.com/in/…"
+            />
           </Field>
           <Field>
             <FieldLabel>Website</FieldLabel>
-            <Input value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://…" />
+            <Input
+              value={fields.websiteUrl}
+              onChange={(e) => set({ websiteUrl: e.target.value })}
+              placeholder="https://…"
+            />
           </Field>
         </div>
+        <SaveRow label="Save contact" save={form.saveContact} />
       </section>
+    </div>
+  )
+}
 
-      <Separator />
-
-      {/* Skills */}
+export function SkillsSection({ form }: { form: ProfileForm }) {
+  const { fields, setSkills } = form
+  return (
+    <div className="flex flex-col gap-8">
+      <PanelHeader
+        eyebrow="Settings · Skills"
+        title="Skills"
+        description="Grouped by category, shaped for an ATS-friendly resume."
+      />
       <section className="flex flex-col gap-3">
-        <SectionHeading>Skills</SectionHeading>
         <p className="text-muted-foreground text-xs leading-relaxed">
           One row per category. List items comma-separated — e.g. category{' '}
           <span className="font-mono">Languages</span>, items{' '}
           <span className="font-mono">TypeScript, Rust, Go</span>.
         </p>
         <div className="flex flex-col gap-2">
-          {skills.map((row, i) => (
+          {fields.skills.map((row, i) => (
             <div key={i} className="flex items-start gap-2">
               <Input
                 value={row.category}
@@ -326,15 +274,26 @@ function ProfileForm({ profile }: { profile: Doc<'profiles'> | null }) {
         >
           <PlusIcon /> Add category
         </Button>
+        <SaveRow label="Save skills" save={form.saveSkills} />
       </section>
+    </div>
+  )
+}
 
-      <Separator />
-
-      {/* Education */}
+export function EducationSection({ form }: { form: ProfileForm }) {
+  const { fields, setEducation } = form
+  const setEdu = (i: number, patch: Partial<(typeof fields.education)[number]>) =>
+    setEducation((rows) => rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)))
+  return (
+    <div className="flex flex-col gap-8">
+      <PanelHeader
+        eyebrow="Settings · Education"
+        title="Education"
+        description="Schools, degrees, and dates for your resume header."
+      />
       <section className="flex flex-col gap-3">
-        <SectionHeading>Education</SectionHeading>
         <div className="flex flex-col gap-3">
-          {education.map((row, i) => (
+          {fields.education.map((row, i) => (
             <div key={i} className="relative flex flex-col gap-2.5 rounded-xl border border-border/60 bg-background/40 p-4">
               <Button
                 size="icon-xs"
@@ -389,20 +348,8 @@ function ProfileForm({ profile }: { profile: Doc<'profiles'> | null }) {
         >
           <GraduationCapIcon /> Add education
         </Button>
+        <SaveRow label="Save education" save={form.saveEducation} />
       </section>
-
-      {/* Save bar */}
-      <div className="sticky bottom-0 flex items-center gap-3 border-border/60 border-t bg-background/90 py-3 backdrop-blur">
-        <Button onClick={onSave} loading={saving}>
-          Save profile
-        </Button>
-        {saved && (
-          <span className="inline-flex items-center gap-1 text-emerald-600 text-sm dark:text-emerald-400">
-            <CheckIcon className="size-3.5" /> Saved
-          </span>
-        )}
-        {error && <p className="text-destructive text-sm text-pretty">{error}</p>}
-      </div>
     </div>
   )
 }
