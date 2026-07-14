@@ -23,6 +23,12 @@ const getAuth = createServerFn({ method: 'GET' }).handler(async () => {
   }
 })
 
+// Root beforeLoad runs on EVERY navigation, but the SSR token is only needed
+// for the initial document + hydration — after that ConvexBetterAuthProvider
+// owns auth reactively. Cache on the client so tab switches never wait on a
+// server round trip. Sign-in/out do full reloads, which resets this.
+let clientAuth: { isAuthenticated: boolean; token: string | null } | null = null
+
 export const Route = createRootRouteWithContext<{
   convexClient: ConvexReactClient
 }>()({
@@ -35,8 +41,11 @@ export const Route = createRootRouteWithContext<{
     links: [{ rel: 'stylesheet', href: appCss }],
   }),
   beforeLoad: async () => {
-    const token = await getAuth()
-    return { isAuthenticated: !!token, token }
+    if (typeof document !== 'undefined' && clientAuth) return clientAuth
+    const token = (await getAuth()) ?? null
+    const auth = { isAuthenticated: !!token, token }
+    if (typeof document !== 'undefined') clientAuth = auth
+    return auth
   },
   component: RootComponent,
   shellComponent: RootDocument,
