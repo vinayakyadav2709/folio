@@ -104,10 +104,13 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
   }
 
   function copyShareLink() {
-    navigator.clipboard.writeText(`${window.location.origin}/p/${projectId}`).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
+    if (!team?.team.slug || !project?.slug) return
+    navigator.clipboard
+      .writeText(`${window.location.origin}/p/${team.team.slug}/${project.slug}`)
+      .then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      })
   }
 
   return (
