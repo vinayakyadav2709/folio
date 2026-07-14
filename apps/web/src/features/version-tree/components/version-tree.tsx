@@ -1,5 +1,6 @@
 import '@xyflow/react/dist/style.css'
 import { useEffect, useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import {
   Background,
   BackgroundVariant,
@@ -75,7 +76,9 @@ export function VersionTree({ resumeId }: { resumeId: string }) {
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button render={<a href={`/dashboard/resumes/${resumeId}`} />}>
+            <Button
+              render={<Link to="/dashboard/resumes/$resumeId" params={{ resumeId }} />}
+            >
               <PencilIcon />
               Commit from the editor
             </Button>

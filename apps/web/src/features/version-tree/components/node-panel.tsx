@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@folio/backend/api'
 import type { Id } from '@folio/backend/dataModel'
@@ -121,12 +122,14 @@ export function NodePanel({ snapshot, branch, branches, resumeId, onClose }: Pro
           variant="outline"
           className="w-full"
           render={
-            <a
-              href={`/dashboard/resumes/${resumeId}?branch=${encodeURIComponent(branch?.name ?? '')}`}
+            <Link
+              to="/dashboard/resumes/$resumeId"
+              params={{ resumeId }}
+              search={{ branch: branch?.name ?? '' }}
             >
               <PencilIcon />
               Open in editor
-            </a>
+            </Link>
           }
         />
         <ForkDialog snapshotId={snapshot._id} />

@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 import { LayersIcon, GitBranchIcon, FileDownIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -67,7 +67,7 @@ function SignedIn() {
       <p className="text-muted-foreground text-pretty text-sm">
         Head to your workspace to keep building.
       </p>
-      <Button size="lg" className="mt-6 w-full" render={<a href="/dashboard" />}>
+      <Button size="lg" className="mt-6 w-full" render={<Link to="/dashboard" />}>
         Go to dashboard
       </Button>
     </div>

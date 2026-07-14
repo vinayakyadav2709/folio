@@ -163,12 +163,13 @@ function EditorInner({
             snapshotId={snapshot._id}
             fileName={resume.name.replace(/\s+/g, '-').toLowerCase() || 'resume'}
           />
-          {/* Tree route is owned elsewhere and may not exist yet — plain anchor on purpose. */}
           <Button
             size="sm"
             variant="ghost"
             className="text-muted-foreground"
-            render={<a href={`/dashboard/resumes/${resume._id}/tree`} />}
+            render={
+              <Link to="/dashboard/resumes/$resumeId/tree" params={{ resumeId: resume._id }} />
+            }
           >
             <GitBranchIcon />
             Tree
