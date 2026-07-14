@@ -1,5 +1,25 @@
 import { Effect } from 'effect'
 import type { QueryCtx } from '../_generated/server'
+import { authComponent } from '../auth'
+
+// Public display name: profile fullName when set, else the account name.
+// Never expose emails here.
+const publicIdentity = (ctx: QueryCtx, userId: string) =>
+  Effect.all([
+    Effect.promise(() =>
+      ctx.db
+        .query('profiles')
+        .withIndex('by_user', (q) => q.eq('userId', userId))
+        .unique(),
+    ),
+    Effect.promise(() => authComponent.getAnyUserById(ctx, userId)),
+  ]).pipe(
+    Effect.map(([profile, user]) => ({
+      username: profile?.username ?? null,
+      fullName: profile?.fullName ?? user?.name ?? null,
+      headline: profile?.headline ?? null,
+    })),
+  )
 
 // All queries here are PUBLIC (no auth) and power the slug/username-based public
 // pages. Missing/unpublished resolves to `null` (the frontend renders its 404);
@@ -26,19 +46,7 @@ export const getPublicTeam = Effect.fn('portfolio.getPublicTeam')(function* (
   )
   const members = yield* Effect.forEach(
     memberships,
-    (m) =>
-      Effect.promise(() =>
-        ctx.db
-          .query('profiles')
-          .withIndex('by_user', (q) => q.eq('userId', m.userId))
-          .unique(),
-      ).pipe(
-        Effect.map((p) => ({
-          username: p?.username ?? null,
-          fullName: p?.fullName ?? null,
-          headline: p?.headline ?? null,
-        })),
-      ),
+    (m) => publicIdentity(ctx, m.userId),
     { concurrency: 'unbounded' },
   )
 
@@ -97,17 +105,8 @@ export const getPublicProject = Effect.fn('portfolio.getPublicProject')(function
   const contributors = yield* Effect.forEach(
     contribs,
     (c) =>
-      Effect.promise(() =>
-        ctx.db
-          .query('profiles')
-          .withIndex('by_user', (q) => q.eq('userId', c.userId))
-          .unique(),
-      ).pipe(
-        Effect.map((p) => ({
-          username: p?.username ?? null,
-          fullName: p?.fullName ?? null,
-          bullets: c.bullets,
-        })),
+      publicIdentity(ctx, c.userId).pipe(
+        Effect.map(({ username, fullName }) => ({ username, fullName, bullets: c.bullets })),
       ),
     { concurrency: 'unbounded' },
   )
