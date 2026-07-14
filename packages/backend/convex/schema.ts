@@ -55,15 +55,24 @@ export default defineSchema({
 
   // The shared pool. `description` is markdown. `updatedAt` drives the
   // "upstream updated — pull changes?" indicator on referencing blocks.
+  // `slug` is unique within the team (public URL /p/$teamSlug/$projectSlug);
+  // optional only because pre-slug rows exist — models backfill on write.
   projects: defineTable({
     teamId: v.id('teams'),
     ownerId: v.string(),
     name: v.string(),
+    slug: v.optional(v.string()),
+    subtitle: v.optional(v.string()),
+    brief: v.optional(v.string()), // one-paragraph plain-text summary
     description: v.string(),
-    links: v.array(v.object({ label: v.string(), url: v.string() })),
+    demoUrl: v.optional(v.string()), // the main live/demo link
+    githubUrl: v.optional(v.string()),
+    links: v.array(v.object({ label: v.string(), url: v.string() })), // legacy, superseded by demoUrl/githubUrl
     screenshotIds: v.array(v.id('_storage')),
     updatedAt: v.number(),
-  }).index('by_team', ['teamId']),
+  })
+    .index('by_team', ['teamId'])
+    .index('by_team_slug', ['teamId', 'slug']),
 
   // Per-member roles on a shared project: shared facts, personal claims.
   contributions: defineTable({
@@ -75,14 +84,47 @@ export default defineSchema({
     .index('by_user', ['userId'])
     .index('by_project_user', ['projectId', 'userId']),
 
+  // Per-user public identity + the source of truth the editor pulls from.
+  // `username` is globally unique (public URLs /u/$username[/...]).
+  // Field shapes follow what an ATS resume needs (Jake's template):
+  // contact links, skill categories, education entries.
+  profiles: defineTable({
+    userId: v.string(), // Better Auth user id
+    username: v.optional(v.string()),
+    fullName: v.optional(v.string()),
+    headline: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    location: v.optional(v.string()),
+    githubUrl: v.optional(v.string()),
+    linkedinUrl: v.optional(v.string()),
+    websiteUrl: v.optional(v.string()),
+    skills: v.array(v.object({ category: v.string(), items: v.array(v.string()) })),
+    education: v.array(
+      v.object({
+        school: v.string(),
+        degree: v.optional(v.string()), // "B.Tech in Computer Science"
+        location: v.optional(v.string()),
+        startDate: v.optional(v.string()),
+        endDate: v.optional(v.string()),
+        gpa: v.optional(v.string()),
+      }),
+    ),
+  })
+    .index('by_user', ['userId'])
+    .index('by_username', ['username']),
+
   resumes: defineTable({
     userId: v.string(),
     name: v.string(),
-    // public page: /u/$username serves the snapshot at publishedSnapshotId
+    // public page: /u/$username/$slug serves the snapshot at publishedSnapshotId
+    slug: v.optional(v.string()), // unique per user
+    // legacy — username now lives on profiles
     username: v.optional(v.string()),
     publishedSnapshotId: v.optional(v.id('snapshots')),
   })
     .index('by_user', ['userId'])
+    .index('by_user_slug', ['userId', 'slug'])
     .index('by_username', ['username']),
 
   branches: defineTable({
