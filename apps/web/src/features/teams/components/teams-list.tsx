@@ -1,4 +1,4 @@
-import { ArrowRightIcon, UsersRoundIcon } from 'lucide-react'
+import { UsersRoundIcon } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@folio/backend/api'
@@ -21,6 +21,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { initials, toneFor } from '../lib/avatar'
+import { CopyLinkButton } from '@/components/shared/copy-link-button'
 import { CreateTeamDialog } from './create-team-dialog'
 import { RoleBadge } from './role-badge'
 import { PendingInvites } from './pending-invites'
@@ -107,7 +108,14 @@ export function TeamsList() {
                     <RoleBadge role={team.role} />
                   </TableCell>
                   <TableCell className="pe-4 text-right">
-                    <ArrowRightIcon className="ms-auto size-4 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+                    {/* Above the row's full-cover Link overlay so it's clickable. */}
+                    <CopyLinkButton
+                      path={`/team/${team.slug}`}
+                      label="Copy link"
+                      size="xs"
+                      variant="ghost"
+                      className="relative z-10 text-muted-foreground"
+                    />
                   </TableCell>
                 </TableRow>
               ))}

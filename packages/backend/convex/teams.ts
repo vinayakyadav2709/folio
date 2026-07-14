@@ -34,6 +34,7 @@ export const getTeam = query({
         role: vRole,
         name: v.union(v.string(), v.null()),
         email: v.union(v.string(), v.null()),
+        username: v.union(v.string(), v.null()),
       }),
     ),
   }),

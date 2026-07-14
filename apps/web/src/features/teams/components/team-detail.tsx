@@ -7,6 +7,7 @@ import type { Id } from '@folio/backend/dataModel'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { CopyLinkButton } from '@/components/shared/copy-link-button'
 import { Input } from '@/components/ui/input'
 import {
   Menu,
@@ -48,7 +49,10 @@ export function TeamDetail({ teamId }: { teamId: Id<'teams'> }) {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-10">
-      <TeamName team={data.team} isAdmin={isAdmin} />
+      <div className="flex items-start justify-between gap-4">
+        <TeamName team={data.team} isAdmin={isAdmin} />
+        <CopyLinkButton path={`/team/${data.team.slug}`} label="Copy team link" />
+      </div>
 
       <Members teamId={teamId} members={data.members} isAdmin={isAdmin} myId={myId} />
 
@@ -223,7 +227,18 @@ function Members({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <RoleBadge role={member.role} />
+                    <div className="flex items-center gap-2">
+                      <RoleBadge role={member.role} />
+                      {member.username && (
+                        <CopyLinkButton
+                          path={`/u/${member.username}`}
+                          label="Copy profile"
+                          size="xs"
+                          variant="ghost"
+                          className="text-muted-foreground"
+                        />
+                      )}
+                    </div>
                   </TableCell>
                   {isAdmin && (
                     <TableCell className="pe-4 text-right">

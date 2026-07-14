@@ -4,6 +4,7 @@ import { api } from '@folio/backend/api'
 import type { Doc } from '@folio/backend/dataModel'
 import { AtSignIcon, CheckIcon, GraduationCapIcon, PlusIcon, XIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { CopyLinkButton } from '@/components/shared/copy-link-button'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
@@ -116,6 +117,7 @@ function UsernameSection({ current }: { current: string }) {
           <Button size="sm" onClick={onSave} disabled={!dirty || !value.trim() || saving}>
             {saving ? 'Saving…' : current ? 'Change' : 'Claim'}
           </Button>
+          {current && <CopyLinkButton path={`/u/${current}`} size="sm" />}
         </div>
         {error && <FieldError>{error}</FieldError>}
       </Field>

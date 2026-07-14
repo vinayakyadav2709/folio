@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from '#/components/ui/card'
+import { CopyLinkButton } from '#/components/shared/copy-link-button'
 
 export const Route = createFileRoute('/dashboard/')({
   component: DashboardHome,
@@ -49,20 +50,33 @@ const QUICK_LINKS: QuickLink[] = [
 
 function DashboardHome() {
   const user = useQuery(api.auth.getAuthUser)
+  const profile = useQuery(api.profiles.getMyProfile)
   const firstName = user?.name?.split(' ')[0] ?? null
 
   return (
     <div className="mx-auto max-w-5xl">
-      <header className="mb-8">
-        <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.3em]">
-          Dashboard
+      <header className="mb-8 flex items-end justify-between gap-4">
+        <div>
+          <div className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.3em]">
+            Dashboard
+          </div>
+          <h1 className="mt-1 text-balance font-heading text-2xl tracking-tight">
+            {firstName ? `Welcome back, ${firstName}.` : 'Welcome back.'}
+          </h1>
+          <p className="mt-1 text-muted-foreground text-sm">
+            Jump into a section to keep building your portfolio.
+          </p>
         </div>
-        <h1 className="mt-1 text-balance font-heading text-2xl tracking-tight">
-          {firstName ? `Welcome back, ${firstName}.` : 'Welcome back.'}
-        </h1>
-        <p className="mt-1 text-muted-foreground text-sm">
-          Jump into a section to keep building your portfolio.
-        </p>
+        {profile?.username ? (
+          <CopyLinkButton path={`/u/${profile.username}`} label="Copy profile link" />
+        ) : profile !== undefined ? (
+          <Link
+            to="/dashboard/settings"
+            className="text-muted-foreground text-sm underline-offset-4 hover:underline"
+          >
+            Claim a username to share your profile →
+          </Link>
+        ) : null}
       </header>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

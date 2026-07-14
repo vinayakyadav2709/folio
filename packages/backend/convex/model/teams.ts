@@ -79,12 +79,21 @@ export const getTeam = Effect.fn('teams.getTeam')(function* (ctx: QueryCtx, team
   const members = yield* Effect.forEach(
     memberships,
     (m) =>
-      Effect.promise(() => authComponent.getAnyUserById(ctx, m.userId)).pipe(
-        Effect.map((u) => ({
+      Effect.all([
+        Effect.promise(() => authComponent.getAnyUserById(ctx, m.userId)),
+        Effect.promise(() =>
+          ctx.db
+            .query('profiles')
+            .withIndex('by_user', (q) => q.eq('userId', m.userId))
+            .unique(),
+        ),
+      ]).pipe(
+        Effect.map(([u, profile]) => ({
           userId: m.userId,
           role: m.role,
           name: u?.name ?? null,
           email: u?.email ?? null,
+          username: profile?.username ?? null,
         })),
       ),
     { concurrency: 'unbounded' },

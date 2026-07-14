@@ -338,12 +338,15 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
         </>
       )}
 
-      <ContributionSection
-        projectId={projectId}
-        contributions={project.contributions}
-        meId={meId}
-        nameOf={nameOf}
-      />
+      {/* Contributions are personal, not project metadata — hide while editing. */}
+      {!editing && (
+        <ContributionSection
+          projectId={projectId}
+          contributions={project.contributions}
+          meId={meId}
+          nameOf={nameOf}
+        />
+      )}
     </div>
   )
 }
