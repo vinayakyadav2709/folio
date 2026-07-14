@@ -1,0 +1,23 @@
+{
+  "name": "@folio/exports",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "peerDependencies": {
+    "react": "^19"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "bun-types": "^1.3.14",
+    "typescript": "^6.0.2"
+  },
+  "dependencies": {
+    "@react-pdf/renderer": "^4.5.1"
+  }
+}

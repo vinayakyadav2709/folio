@@ -1,0 +1,36 @@
+{
+  "name": "@folio/backend",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./api": {
+      "types": "./convex/_generated/api.d.ts",
+      "default": "./convex/_generated/api.js"
+    },
+    "./dataModel": {
+      "types": "./convex/_generated/dataModel.d.ts",
+      "default": "./convex/_generated/dataModel.d.ts"
+    }
+  },
+  "scripts": {
+    "dev": "CONVEX_AGENT_MODE=anonymous convex dev",
+    "codegen": "convex codegen",
+    "typecheck": "tsc --noEmit -p convex"
+  },
+  "dependencies": {
+    "@convex-dev/better-auth": "^0.12.2",
+    "@effect/ai": "0.36.0",
+    "@effect/ai-anthropic": "0.26.0",
+    "@effect/ai-google": "0.15.0",
+    "@effect/ai-openai": "0.40.1",
+    "@effect/experimental": "0.60.0",
+    "@effect/platform": "0.96.2",
+    "better-auth": "1.6.15",
+    "convex": "^1.31.0",
+    "effect": "^3.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^6.0.2"
+  }
+}
