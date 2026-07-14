@@ -179,7 +179,11 @@ function EditorInner({
       </div>
 
       <div className="grid grid-cols-[12rem_minmax(0,1fr)_19rem] items-start gap-6">
-        <BlockLibrary onAdd={(block) => setBlocks((prev) => [...prev, block])} />
+        <BlockLibrary
+          onAdd={(block) => setBlocks((prev) => [...prev, block])}
+          header={header}
+          onHeader={setHeader}
+        />
         <Canvas blocks={blocks} onChange={setBlocks} />
         <SidePanel
           blocks={blocks}

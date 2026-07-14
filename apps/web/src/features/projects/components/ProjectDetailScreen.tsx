@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link as RouterLink, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
-import { ArrowLeft, Check, ExternalLink, Link2, Pencil, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, Github, Globe, Link2, Pencil, Trash2 } from 'lucide-react'
 import { api } from '@folio/backend/api'
 import type { Id } from '@folio/backend/dataModel'
 import {
@@ -23,13 +23,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { errorMessage } from '../lib/convexError'
 import { Monogram } from './avatars'
 import { ContributionSection } from './ContributionSection'
-import { LinksEditor, type Link as LinkRow } from './LinksEditor'
 import { Markdown } from './Markdown'
 import { Screenshots } from './Screenshots'
 
 export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }) {
   const project = useQuery(api.projects.getProject, { projectId })
-  const publicProject = useQuery(api.projects.getPublicProject, { projectId })
   const me = useQuery(api.auth.getAuthUser)
   const team = useQuery(api.teams.getTeam, project ? { teamId: project.teamId } : 'skip')
 
@@ -39,8 +37,11 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
 
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState('')
+  const [subtitle, setSubtitle] = useState('')
+  const [brief, setBrief] = useState('')
   const [description, setDescription] = useState('')
-  const [links, setLinks] = useState<LinkRow[]>([])
+  const [demoUrl, setDemoUrl] = useState('')
+  const [githubUrl, setGithubUrl] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
@@ -63,8 +64,11 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
 
   function startEdit() {
     setName(project!.name)
+    setSubtitle(project!.subtitle ?? '')
+    setBrief(project!.brief ?? '')
     setDescription(project!.description)
-    setLinks(project!.links)
+    setDemoUrl(project!.demoUrl ?? '')
+    setGithubUrl(project!.githubUrl ?? '')
     setError(null)
     setEditing(true)
   }
@@ -77,7 +81,10 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
         projectId,
         name: name.trim(),
         description,
-        links: links.filter((l) => l.label.trim() && l.url.trim()),
+        subtitle: subtitle.trim() || undefined,
+        brief: brief.trim() || undefined,
+        demoUrl: demoUrl.trim() || undefined,
+        githubUrl: githubUrl.trim() || undefined,
       })
       setEditing(false)
     } catch (err) {
@@ -124,6 +131,25 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
                 <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div className="flex flex-col gap-2">
+                <Label htmlFor="edit-subtitle">Subtitle</Label>
+                <Input
+                  id="edit-subtitle"
+                  value={subtitle}
+                  onChange={(e) => setSubtitle(e.target.value)}
+                  placeholder="One line — e.g. Realtime collaborative editor"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="edit-brief">Brief</Label>
+                <Textarea
+                  id="edit-brief"
+                  value={brief}
+                  onChange={(e) => setBrief(e.target.value)}
+                  placeholder="One-paragraph summary of what this is."
+                  className="min-h-20 resize-y text-sm"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="edit-description">Description</Label>
                 <Textarea
                   id="edit-description"
@@ -132,7 +158,26 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
                   className="min-h-72 resize-y font-mono text-sm"
                 />
               </div>
-              <LinksEditor links={links} onChange={setLinks} />
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="edit-demo">Demo URL</Label>
+                <Input
+                  id="edit-demo"
+                  type="url"
+                  value={demoUrl}
+                  onChange={(e) => setDemoUrl(e.target.value)}
+                  placeholder="https://myapp.dev"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="edit-github">GitHub URL</Label>
+                <Input
+                  id="edit-github"
+                  type="url"
+                  value={githubUrl}
+                  onChange={(e) => setGithubUrl(e.target.value)}
+                  placeholder="https://github.com/you/project"
+                />
+              </div>
               {error && <p className="text-destructive text-sm">{error}</p>}
               <div className="flex gap-2">
                 <Button
@@ -175,6 +220,11 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
               <Monogram name={project.name} className="mt-0.5 size-11 shrink-0" />
               <div className="min-w-0">
                 <h1 className="font-heading font-semibold text-2xl text-balance">{project.name}</h1>
+                {project.subtitle && (
+                  <p className="mt-0.5 text-pretty text-muted-foreground text-sm">
+                    {project.subtitle}
+                  </p>
+                )}
                 <p className="mt-0.5 text-muted-foreground text-sm">
                   Owned by{' '}
                   <span className="text-foreground">{nameOf(project.ownerId)}</span>
@@ -238,6 +288,35 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
 
           {error && <p className="text-destructive text-sm">{error}</p>}
 
+          {(project.demoUrl || project.githubUrl) && (
+            <div className="flex flex-wrap gap-2">
+              {project.demoUrl && (
+                <a
+                  href={project.demoUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-3 py-1.5 text-sm shadow-xs/5 transition-[color,background-color,box-shadow] hover:border-foreground/15 hover:bg-accent"
+                >
+                  <Globe className="size-3.5 text-muted-foreground" /> Live demo
+                </a>
+              )}
+              {project.githubUrl && (
+                <a
+                  href={project.githubUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-3 py-1.5 text-sm shadow-xs/5 transition-[color,background-color,box-shadow] hover:border-foreground/15 hover:bg-accent"
+                >
+                  <Github className="size-3.5 text-muted-foreground" /> GitHub
+                </a>
+              )}
+            </div>
+          )}
+
+          {project.brief && (
+            <p className="text-pretty text-muted-foreground leading-relaxed">{project.brief}</p>
+          )}
+
           <Card>
             <CardPanel className="py-5">
               {project.description.trim() ? (
@@ -248,26 +327,10 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
             </CardPanel>
           </Card>
 
-          {project.links.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {project.links.map((link, i) => (
-                <a
-                  key={i}
-                  href={link.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-3 py-1.5 text-sm shadow-xs/5 transition-[color,background-color,box-shadow] hover:border-foreground/15 hover:bg-accent"
-                >
-                  <ExternalLink className="size-3.5 text-muted-foreground" /> {link.label}
-                </a>
-              ))}
-            </div>
-          )}
-
           <Screenshots
             projectId={projectId}
             storageIds={project.screenshotIds}
-            urls={publicProject?.screenshotUrls ?? []}
+            urls={project.screenshotUrls}
           />
         </>
       )}

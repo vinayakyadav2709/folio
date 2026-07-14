@@ -4,9 +4,9 @@ import type { FunctionReturnType } from 'convex/server'
 import type { api } from '@folio/backend/api'
 import { Avatar, AvatarFallback } from '#/components/ui/avatar'
 import { PageFooter } from './chrome'
-import { Markdown } from './markdown'
 
-type PublicTeam = FunctionReturnType<typeof api.portfolio.getPublicTeam>
+type PublicTeam = NonNullable<FunctionReturnType<typeof api.portfolio.getPublicTeam>>
+type Member = PublicTeam['members'][number]
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/)
@@ -15,9 +15,12 @@ function initials(name: string): string {
   return (first + last).toUpperCase() || '?'
 }
 
+function memberLabel(m: Member): string {
+  return m.fullName ?? (m.username ? `@${m.username}` : 'Member')
+}
+
 export function TeamPortfolio({ data }: { data: PublicTeam }) {
   const { team, members, projects } = data
-  const named = members.filter((m): m is typeof m & { name: string } => !!m.name)
 
   return (
     <div className="min-h-svh bg-background text-foreground antialiased">
@@ -31,28 +34,40 @@ export function TeamPortfolio({ data }: { data: PublicTeam }) {
             {team.name}
           </h1>
 
-          {named.length > 0 && (
-            <div className="mt-5 flex items-center gap-3">
-              <div className="flex -space-x-2">
-                {named.slice(0, 6).map((m) => (
-                  <Avatar
-                    key={m.name}
-                    className="size-9 border-2 border-background bg-muted"
+          {members.length > 0 && (
+            <div className="mt-6 flex flex-wrap gap-2">
+              {members.map((m, i) => {
+                const label = memberLabel(m)
+                const inner = (
+                  <>
+                    <Avatar className="size-6 bg-muted">
+                      <AvatarFallback className="text-[10px]">{initials(label)}</AvatarFallback>
+                    </Avatar>
+                    <span className="flex flex-col leading-tight">
+                      <span className="font-medium text-[13px]">{label}</span>
+                      {m.headline && (
+                        <span className="text-[11px] text-muted-foreground">{m.headline}</span>
+                      )}
+                    </span>
+                  </>
+                )
+                const className =
+                  'inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/40 py-1 pr-3.5 pl-1'
+                return m.username ? (
+                  <Link
+                    key={m.username}
+                    to="/u/$username"
+                    params={{ username: m.username }}
+                    className={`${className} transition-colors hover:border-foreground/25`}
                   >
-                    <AvatarFallback className="text-[11px]">
-                      {initials(m.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                ))}
-                {named.length > 6 && (
-                  <div className="flex size-9 items-center justify-center rounded-full border-2 border-background bg-muted font-medium text-[11px] text-muted-foreground">
-                    +{named.length - 6}
-                  </div>
-                )}
-              </div>
-              <span className="text-muted-foreground text-sm">
-                {named.map((m) => m.name).join(' · ')}
-              </span>
+                    {inner}
+                  </Link>
+                ) : (
+                  <span key={`${label}-${i}`} className={className}>
+                    {inner}
+                  </span>
+                )
+              })}
             </div>
           )}
         </header>
@@ -72,22 +87,20 @@ export function TeamPortfolio({ data }: { data: PublicTeam }) {
           {projects.length === 0 ? (
             <div className="rounded-2xl border border-border/60 border-dashed bg-background/40 px-6 py-14 text-center">
               <UsersIcon className="mx-auto size-6 text-muted-foreground/60" />
-              <p className="mt-3 text-muted-foreground text-sm">
-                No projects published yet.
-              </p>
+              <p className="mt-3 text-muted-foreground text-sm">No projects published yet.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {projects.map((project) => (
                 <article
-                  key={project._id}
+                  key={project.slug}
                   className="group relative flex flex-col rounded-2xl border border-border/60 bg-background/40 p-5 transition-colors hover:border-foreground/25"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="text-pretty font-heading font-semibold text-base leading-snug">
                       <Link
-                        to="/p/$projectId"
-                        params={{ projectId: project._id }}
+                        to="/p/$teamSlug/$projectSlug"
+                        params={{ teamSlug: team.slug, projectSlug: project.slug }}
                         className="before:absolute before:inset-0"
                       >
                         {project.name}
@@ -96,30 +109,35 @@ export function TeamPortfolio({ data }: { data: PublicTeam }) {
                     <ArrowUpRightIcon className="size-4 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-foreground" />
                   </div>
 
-                  {project.description && (
-                    <div className="mt-2 line-clamp-3">
-                      <Markdown>{project.description}</Markdown>
-                    </div>
+                  {project.subtitle && (
+                    <p className="mt-0.5 text-[13px] text-muted-foreground">{project.subtitle}</p>
+                  )}
+                  {project.brief && (
+                    <p className="mt-2 line-clamp-3 text-pretty text-sm text-foreground/80 leading-relaxed">
+                      {project.brief}
+                    </p>
                   )}
 
-                  <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-3 font-mono text-[11px] text-muted-foreground">
-                    <span className="inline-flex items-center gap-1.5 tabular-nums">
-                      <UsersIcon className="size-3 opacity-70" />
-                      {project.contributorIds.length}{' '}
-                      {project.contributorIds.length === 1
-                        ? 'contributor'
-                        : 'contributors'}
-                    </span>
-                    {project.links.map((l) => (
-                      <a
-                        key={l.url}
-                        href={l.url}
-                        className="relative z-10 inline-flex items-center gap-1 hover:text-foreground"
-                      >
-                        {l.label}
-                      </a>
-                    ))}
-                  </div>
+                  {(project.demoUrl || project.githubUrl) && (
+                    <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[11px] text-muted-foreground">
+                      {project.demoUrl && (
+                        <a
+                          href={project.demoUrl}
+                          className="relative z-10 inline-flex items-center gap-1 hover:text-foreground"
+                        >
+                          Demo
+                        </a>
+                      )}
+                      {project.githubUrl && (
+                        <a
+                          href={project.githubUrl}
+                          className="relative z-10 inline-flex items-center gap-1 hover:text-foreground"
+                        >
+                          GitHub
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </article>
               ))}
             </div>

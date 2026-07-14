@@ -1,19 +1,24 @@
-import { LinkIcon, MailIcon, MapPinIcon, PhoneIcon } from 'lucide-react'
+import { useState } from 'react'
+import { DownloadIcon, LinkIcon, MailIcon, MapPinIcon, PhoneIcon } from 'lucide-react'
 import type { FunctionReturnType } from 'convex/server'
 import { groupSections } from '@folio/exports'
 import type { api } from '@folio/backend/api'
+import { Button } from '#/components/ui/button'
 import { PageFooter } from './chrome'
 
-type Published = FunctionReturnType<typeof api.resumes.getPublished>
+type Resume = NonNullable<FunctionReturnType<typeof api.portfolio.getPublicResume>>
 
-export function ResumeView({ data }: { data: Published }) {
-  const { header, blocks, theme } = data
+export function ResumeView({ data }: { data: Resume }) {
+  const { name, header, blocks, theme } = data
   const accent = theme.accentColor
   const sections = groupSections(blocks)
   const accentStyle = accent ? { color: accent } : undefined
 
   return (
     <div className="min-h-svh bg-background text-foreground antialiased">
+      <div className="fixed top-4 right-4 z-20 print:hidden">
+        <DownloadPdf fileName={name} snapshot={{ header, blocks, theme }} />
+      </div>
       <article className="mx-auto max-w-3xl px-6 py-14 sm:px-8 print:py-8">
         {/* Header */}
         <header className="relative">
@@ -134,6 +139,42 @@ export function ResumeView({ data }: { data: Published }) {
       </article>
       <PageFooter />
     </div>
+  )
+}
+
+function DownloadPdf({
+  fileName,
+  snapshot,
+}: {
+  fileName: string
+  snapshot: Pick<Resume, 'header' | 'blocks' | 'theme'>
+}) {
+  const [busy, setBusy] = useState(false)
+
+  async function download() {
+    setBusy(true)
+    try {
+      // Dynamically imported so @react-pdf/renderer never loads during SSR.
+      const exports = await import('@folio/exports')
+      const PdfDoc = exports.getPdfTheme('ats')
+      const doc = (<PdfDoc snapshot={snapshot} />) as Parameters<typeof exports.pdf>[0]
+      const blob = await exports.pdf(doc).toBlob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${fileName}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Button size="sm" onClick={download} loading={busy} className="shadow-sm">
+      <DownloadIcon />
+      Download PDF
+    </Button>
   )
 }
 

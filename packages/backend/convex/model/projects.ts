@@ -135,7 +135,13 @@ export const getProject = Effect.fn('projects.getProject')(function* (
       .withIndex('by_project', (q) => q.eq('projectId', projectId))
       .collect(),
   )
-  return { ...project, contributions }
+  // Resolve signed URLs for screenshots so the detail screen can render them.
+  const screenshotUrls = yield* Effect.forEach(
+    project.screenshotIds,
+    (id) => Effect.promise(() => ctx.storage.getUrl(id)),
+    { concurrency: 'unbounded' },
+  ).pipe(Effect.map((urls) => urls.filter((u): u is string => u !== null)))
+  return { ...project, contributions, screenshotUrls }
 })
 
 export const generateScreenshotUploadUrl = Effect.fn('projects.generateScreenshotUploadUrl')(

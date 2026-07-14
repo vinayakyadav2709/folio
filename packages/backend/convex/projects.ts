@@ -74,7 +74,11 @@ export const listTeamProjects = query({
 
 export const getProject = query({
   args: { projectId: v.id('projects') },
-  returns: v.object({ ...vProject, contributions: v.array(vContribution) }),
+  returns: v.object({
+    ...vProject,
+    contributions: v.array(vContribution),
+    screenshotUrls: v.array(v.string()),
+  }),
   handler: (ctx, { projectId }) => run(Projects.getProject(ctx, projectId)),
 })
 

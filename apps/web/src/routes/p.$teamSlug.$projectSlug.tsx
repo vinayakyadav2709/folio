@@ -1,13 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { api } from '@folio/backend/api'
-import type { Id } from '@folio/backend/dataModel'
 import { ProjectView, PublicNotFound, loadPublic } from '#/features/portfolio'
 
-export const Route = createFileRoute('/p/$projectId')({
+export const Route = createFileRoute('/p/$teamSlug/$projectSlug')({
   loader: ({ params }) =>
-    loadPublic(api.projects.getPublicProject, { projectId: params.projectId as Id<'projects'> }),
+    loadPublic(api.portfolio.getPublicProject, {
+      teamSlug: params.teamSlug,
+      projectSlug: params.projectSlug,
+    }),
   head: ({ loaderData }) => ({
-    meta: [{ title: loaderData ? `${loaderData.name} — folio` : 'folio' }],
+    meta: [{ title: loaderData ? `${loaderData.project.name} — folio` : 'folio' }],
   }),
   component: () => <ProjectView data={Route.useLoaderData()} />,
   notFoundComponent: PublicNotFound,

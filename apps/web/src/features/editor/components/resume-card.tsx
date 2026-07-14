@@ -67,9 +67,9 @@ export function ResumeCard({ resume }: { resume: Doc<'resumes'> }) {
             </Link>
           )}
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            {resume.username && (
+            {resume.slug && (
               <span className="rounded-full border border-border/60 bg-background px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
-                /u/{resume.username}
+                /{resume.slug}
               </span>
             )}
             {resume.publishedSnapshotId && (
@@ -124,22 +124,20 @@ function PublishDialog({ resume }: { resume: Doc<'resumes'> }) {
 // Mounted only while the dialog is open, so getTree runs on demand.
 function PublishForm({ resume }: { resume: Doc<'resumes'> }) {
   const tree = useQuery(api.snapshots.getTree, { resumeId: resume._id })
-  const setUsername = useMutation(api.resumes.setUsername)
+  const profile = useQuery(api.profiles.getMyProfile)
   const publish = useMutation(api.resumes.publish)
   const unpublish = useMutation(api.resumes.unpublish)
-  const [username, setUsernameInput] = useState(resume.username ?? '')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   const mainHead = tree?.branches.find((b) => b.name === 'main')?.headSnapshotId
+  const username = profile?.username ?? null
+  const publicPath = username && resume.slug ? `/u/${username}/${resume.slug}` : null
 
   async function onPublish() {
     setError(null)
     setBusy(true)
     try {
-      if (username !== resume.username) {
-        await setUsername({ resumeId: resume._id, username })
-      }
       await publish({ resumeId: resume._id, snapshotId: mainHead! })
     } catch (err) {
       setError(errorMessage(err))
@@ -150,14 +148,18 @@ function PublishForm({ resume }: { resume: Doc<'resumes'> }) {
 
   return (
     <DialogPanel className="flex flex-col gap-3">
-      <Input
-        value={username}
-        placeholder="username (e.g. ada-lovelace)"
-        onChange={(e) => setUsernameInput(e.target.value)}
-      />
+      {!username && (
+        <p className="text-muted-foreground text-sm text-pretty">
+          Claim a username in{' '}
+          <Link to="/dashboard/settings" className="underline underline-offset-2">
+            Settings
+          </Link>{' '}
+          to get a public link — publishing still works without one.
+        </p>
+      )}
       {error && <p className="text-destructive text-sm text-pretty">{error}</p>}
       <div className="flex items-center gap-2">
-        <Button size="sm" onClick={onPublish} disabled={!username || !mainHead} loading={busy}>
+        <Button size="sm" onClick={onPublish} disabled={!mainHead} loading={busy}>
           {resume.publishedSnapshotId ? 'Republish main head' : 'Publish main head'}
         </Button>
         {resume.publishedSnapshotId && (
@@ -170,15 +172,15 @@ function PublishForm({ resume }: { resume: Doc<'resumes'> }) {
           </Button>
         )}
       </div>
-      {resume.publishedSnapshotId && resume.username && (
+      {resume.publishedSnapshotId && publicPath && (
         <a
-          href={`/u/${resume.username}`}
+          href={publicPath}
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center gap-1.5 text-muted-foreground text-sm transition-colors hover:text-foreground"
         >
           <ExternalLinkIcon className="size-3.5" />
-          View public page: <span className="font-mono text-xs">/u/{resume.username}</span>
+          View public page: <span className="font-mono text-xs">{publicPath}</span>
         </a>
       )}
     </DialogPanel>

@@ -14,12 +14,14 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as UUsernameRouteImport } from './routes/u.$username'
 import { Route as TeamSlugRouteImport } from './routes/team.$slug'
-import { Route as PProjectIdRouteImport } from './routes/p.$projectId'
 import { Route as DashboardTeamsRouteImport } from './routes/dashboard.teams'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardResumesRouteImport } from './routes/dashboard.resumes'
 import { Route as DashboardProjectsRouteImport } from './routes/dashboard.projects'
+import { Route as UUsernameIndexRouteImport } from './routes/u.$username.index'
 import { Route as DashboardTeamsIndexRouteImport } from './routes/dashboard.teams.index'
+import { Route as UUsernameResumeSlugRouteImport } from './routes/u.$username.$resumeSlug'
+import { Route as PTeamSlugProjectSlugRouteImport } from './routes/p.$teamSlug.$projectSlug'
 import { Route as DashboardTeamsTeamIdRouteImport } from './routes/dashboard.teams.$teamId'
 import { Route as DashboardResumesResumeIdRouteImport } from './routes/dashboard.resumes.$resumeId'
 import { Route as DashboardProjectsNewRouteImport } from './routes/dashboard.projects.new'
@@ -52,11 +54,6 @@ const TeamSlugRoute = TeamSlugRouteImport.update({
   path: '/team/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PProjectIdRoute = PProjectIdRouteImport.update({
-  id: '/p/$projectId',
-  path: '/p/$projectId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DashboardTeamsRoute = DashboardTeamsRouteImport.update({
   id: '/teams',
   path: '/teams',
@@ -77,10 +74,25 @@ const DashboardProjectsRoute = DashboardProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => DashboardRoute,
 } as any)
+const UUsernameIndexRoute = UUsernameIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => UUsernameRoute,
+} as any)
 const DashboardTeamsIndexRoute = DashboardTeamsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardTeamsRoute,
+} as any)
+const UUsernameResumeSlugRoute = UUsernameResumeSlugRouteImport.update({
+  id: '/$resumeSlug',
+  path: '/$resumeSlug',
+  getParentRoute: () => UUsernameRoute,
+} as any)
+const PTeamSlugProjectSlugRoute = PTeamSlugProjectSlugRouteImport.update({
+  id: '/p/$teamSlug/$projectSlug',
+  path: '/p/$teamSlug/$projectSlug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardTeamsTeamIdRoute = DashboardTeamsTeamIdRouteImport.update({
   id: '/$teamId',
@@ -123,16 +135,18 @@ export interface FileRoutesByFullPath {
   '/dashboard/resumes': typeof DashboardResumesRouteWithChildren
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/teams': typeof DashboardTeamsRouteWithChildren
-  '/p/$projectId': typeof PProjectIdRoute
   '/team/$slug': typeof TeamSlugRoute
-  '/u/$username': typeof UUsernameRoute
+  '/u/$username': typeof UUsernameRouteWithChildren
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/projects/new': typeof DashboardProjectsNewRoute
   '/dashboard/resumes/$resumeId': typeof DashboardResumesResumeIdRouteWithChildren
   '/dashboard/teams/$teamId': typeof DashboardTeamsTeamIdRoute
+  '/p/$teamSlug/$projectSlug': typeof PTeamSlugProjectSlugRoute
+  '/u/$username/$resumeSlug': typeof UUsernameResumeSlugRoute
   '/dashboard/teams/': typeof DashboardTeamsIndexRoute
+  '/u/$username/': typeof UUsernameIndexRoute
   '/dashboard/resumes/$resumeId/tree': typeof DashboardResumesResumeIdTreeRoute
 }
 export interface FileRoutesByTo {
@@ -140,16 +154,17 @@ export interface FileRoutesByTo {
   '/dashboard/projects': typeof DashboardProjectsRouteWithChildren
   '/dashboard/resumes': typeof DashboardResumesRouteWithChildren
   '/dashboard/settings': typeof DashboardSettingsRoute
-  '/p/$projectId': typeof PProjectIdRoute
   '/team/$slug': typeof TeamSlugRoute
-  '/u/$username': typeof UUsernameRoute
   '/dashboard': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/projects/new': typeof DashboardProjectsNewRoute
   '/dashboard/resumes/$resumeId': typeof DashboardResumesResumeIdRouteWithChildren
   '/dashboard/teams/$teamId': typeof DashboardTeamsTeamIdRoute
+  '/p/$teamSlug/$projectSlug': typeof PTeamSlugProjectSlugRoute
+  '/u/$username/$resumeSlug': typeof UUsernameResumeSlugRoute
   '/dashboard/teams': typeof DashboardTeamsIndexRoute
+  '/u/$username': typeof UUsernameIndexRoute
   '/dashboard/resumes/$resumeId/tree': typeof DashboardResumesResumeIdTreeRoute
 }
 export interface FileRoutesById {
@@ -160,16 +175,18 @@ export interface FileRoutesById {
   '/dashboard/resumes': typeof DashboardResumesRouteWithChildren
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/teams': typeof DashboardTeamsRouteWithChildren
-  '/p/$projectId': typeof PProjectIdRoute
   '/team/$slug': typeof TeamSlugRoute
-  '/u/$username': typeof UUsernameRoute
+  '/u/$username': typeof UUsernameRouteWithChildren
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/projects/new': typeof DashboardProjectsNewRoute
   '/dashboard/resumes/$resumeId': typeof DashboardResumesResumeIdRouteWithChildren
   '/dashboard/teams/$teamId': typeof DashboardTeamsTeamIdRoute
+  '/p/$teamSlug/$projectSlug': typeof PTeamSlugProjectSlugRoute
+  '/u/$username/$resumeSlug': typeof UUsernameResumeSlugRoute
   '/dashboard/teams/': typeof DashboardTeamsIndexRoute
+  '/u/$username/': typeof UUsernameIndexRoute
   '/dashboard/resumes/$resumeId/tree': typeof DashboardResumesResumeIdTreeRoute
 }
 export interface FileRouteTypes {
@@ -181,7 +198,6 @@ export interface FileRouteTypes {
     | '/dashboard/resumes'
     | '/dashboard/settings'
     | '/dashboard/teams'
-    | '/p/$projectId'
     | '/team/$slug'
     | '/u/$username'
     | '/dashboard/'
@@ -190,7 +206,10 @@ export interface FileRouteTypes {
     | '/dashboard/projects/new'
     | '/dashboard/resumes/$resumeId'
     | '/dashboard/teams/$teamId'
+    | '/p/$teamSlug/$projectSlug'
+    | '/u/$username/$resumeSlug'
     | '/dashboard/teams/'
+    | '/u/$username/'
     | '/dashboard/resumes/$resumeId/tree'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -198,16 +217,17 @@ export interface FileRouteTypes {
     | '/dashboard/projects'
     | '/dashboard/resumes'
     | '/dashboard/settings'
-    | '/p/$projectId'
     | '/team/$slug'
-    | '/u/$username'
     | '/dashboard'
     | '/api/auth/$'
     | '/dashboard/projects/$projectId'
     | '/dashboard/projects/new'
     | '/dashboard/resumes/$resumeId'
     | '/dashboard/teams/$teamId'
+    | '/p/$teamSlug/$projectSlug'
+    | '/u/$username/$resumeSlug'
     | '/dashboard/teams'
+    | '/u/$username'
     | '/dashboard/resumes/$resumeId/tree'
   id:
     | '__root__'
@@ -217,7 +237,6 @@ export interface FileRouteTypes {
     | '/dashboard/resumes'
     | '/dashboard/settings'
     | '/dashboard/teams'
-    | '/p/$projectId'
     | '/team/$slug'
     | '/u/$username'
     | '/dashboard/'
@@ -226,17 +245,20 @@ export interface FileRouteTypes {
     | '/dashboard/projects/new'
     | '/dashboard/resumes/$resumeId'
     | '/dashboard/teams/$teamId'
+    | '/p/$teamSlug/$projectSlug'
+    | '/u/$username/$resumeSlug'
     | '/dashboard/teams/'
+    | '/u/$username/'
     | '/dashboard/resumes/$resumeId/tree'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRouteWithChildren
-  PProjectIdRoute: typeof PProjectIdRoute
   TeamSlugRoute: typeof TeamSlugRoute
-  UUsernameRoute: typeof UUsernameRoute
+  UUsernameRoute: typeof UUsernameRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  PTeamSlugProjectSlugRoute: typeof PTeamSlugProjectSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -276,13 +298,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/p/$projectId': {
-      id: '/p/$projectId'
-      path: '/p/$projectId'
-      fullPath: '/p/$projectId'
-      preLoaderRoute: typeof PProjectIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/dashboard/teams': {
       id: '/dashboard/teams'
       path: '/teams'
@@ -311,12 +326,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardProjectsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/u/$username/': {
+      id: '/u/$username/'
+      path: '/'
+      fullPath: '/u/$username/'
+      preLoaderRoute: typeof UUsernameIndexRouteImport
+      parentRoute: typeof UUsernameRoute
+    }
     '/dashboard/teams/': {
       id: '/dashboard/teams/'
       path: '/'
       fullPath: '/dashboard/teams/'
       preLoaderRoute: typeof DashboardTeamsIndexRouteImport
       parentRoute: typeof DashboardTeamsRoute
+    }
+    '/u/$username/$resumeSlug': {
+      id: '/u/$username/$resumeSlug'
+      path: '/$resumeSlug'
+      fullPath: '/u/$username/$resumeSlug'
+      preLoaderRoute: typeof UUsernameResumeSlugRouteImport
+      parentRoute: typeof UUsernameRoute
+    }
+    '/p/$teamSlug/$projectSlug': {
+      id: '/p/$teamSlug/$projectSlug'
+      path: '/p/$teamSlug/$projectSlug'
+      fullPath: '/p/$teamSlug/$projectSlug'
+      preLoaderRoute: typeof PTeamSlugProjectSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/teams/$teamId': {
       id: '/dashboard/teams/$teamId'
@@ -435,13 +471,27 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
   DashboardRouteChildren,
 )
 
+interface UUsernameRouteChildren {
+  UUsernameResumeSlugRoute: typeof UUsernameResumeSlugRoute
+  UUsernameIndexRoute: typeof UUsernameIndexRoute
+}
+
+const UUsernameRouteChildren: UUsernameRouteChildren = {
+  UUsernameResumeSlugRoute: UUsernameResumeSlugRoute,
+  UUsernameIndexRoute: UUsernameIndexRoute,
+}
+
+const UUsernameRouteWithChildren = UUsernameRoute._addFileChildren(
+  UUsernameRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRouteWithChildren,
-  PProjectIdRoute: PProjectIdRoute,
   TeamSlugRoute: TeamSlugRoute,
-  UUsernameRoute: UUsernameRoute,
+  UUsernameRoute: UUsernameRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  PTeamSlugProjectSlugRoute: PTeamSlugProjectSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

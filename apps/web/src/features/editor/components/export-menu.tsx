@@ -17,10 +17,14 @@ import { ChevronDownIcon, DownloadIcon, FileCode2Icon, FileTextIcon } from 'luci
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from '@/components/ui/menu'
+import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { Block, Header, Theme } from '../lib/blocks'
 import { errorMessage } from '../lib/errors'
 
 type Kind = 'pdf' | 'latex'
+
+// ATS-first: the Jake's-Resume layout is the default download.
+const THEME_IDS = ['ats', 'classic', 'compact'] as const
 
 type Props = {
   blocks: Block[]
@@ -36,6 +40,7 @@ type Props = {
 export function ExportMenu({ blocks, header, theme, snapshotId, fileName }: Props) {
   const tagSent = useMutation(api.snapshots.tagSent)
   const [kind, setKind] = useState<Kind | null>(null)
+  const [themeId, setThemeId] = useState<string>('ats')
   const [company, setCompany] = useState('')
   const [role, setRole] = useState('')
   const [busy, setBusy] = useState(false)
@@ -45,7 +50,7 @@ export function ExportMenu({ blocks, header, theme, snapshotId, fileName }: Prop
     setBusy(true)
     setError(null)
     try {
-      const snapshot = { blocks, header, theme }
+      const snapshot = { blocks, header, theme: { ...theme, id: themeId } }
       const exports = await import('@folio/exports')
       if (kind === 'latex') {
         download(
@@ -53,7 +58,7 @@ export function ExportMenu({ blocks, header, theme, snapshotId, fileName }: Prop
           `${fileName}.tex`,
         )
       } else {
-        const PdfDoc = exports.getPdfTheme(theme.id)
+        const PdfDoc = exports.getPdfTheme(themeId)
         const doc = (<PdfDoc snapshot={snapshot} />) as Parameters<typeof exports.pdf>[0]
         download(await exports.pdf(doc).toBlob(), `${fileName}.pdf`)
       }
@@ -103,6 +108,21 @@ export function ExportMenu({ blocks, header, theme, snapshotId, fileName }: Prop
             </DialogDescription>
           </DialogHeader>
           <DialogPanel className="flex flex-col gap-4">
+            <Field>
+              <FieldLabel>Theme</FieldLabel>
+              <Select value={themeId} onValueChange={(value) => setThemeId(value as string)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectPopup>
+                  {THEME_IDS.map((id) => (
+                    <SelectItem key={id} value={id} className="capitalize">
+                      {id === 'ats' ? 'ATS (Jake’s Resume)' : id}
+                    </SelectItem>
+                  ))}
+                </SelectPopup>
+              </Select>
+            </Field>
             <Field>
               <FieldLabel>Company</FieldLabel>
               <Input value={company} placeholder="Optional" onChange={(e) => setCompany(e.target.value)} />

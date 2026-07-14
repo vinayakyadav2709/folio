@@ -8,14 +8,19 @@ import type { FunctionArgs, FunctionReference, FunctionReturnType } from 'convex
 // signed-out visitors, so we deliberately do NOT use useQuery here.
 const client = new ConvexHttpClient(import.meta.env.VITE_CONVEX_URL as string)
 
-// Run a public query, mapping the backend's NotFound ConvexError to a
-// TanStack notFound() so the route renders its 404 component.
+// Run a public query, mapping a missing resource to a TanStack notFound() so
+// the route renders its 404 component. Two "missing" shapes are handled: a
+// NotFound ConvexError thrown by the backend (profiles.getPublicProfile), and
+// a plain null return (the portfolio.* queries). Callers therefore always get
+// a non-null value back.
 export async function loadPublic<Q extends FunctionReference<'query'>>(
   query: Q,
   args: FunctionArgs<Q>,
-): Promise<FunctionReturnType<Q>> {
+): Promise<NonNullable<FunctionReturnType<Q>>> {
   try {
-    return await client.query(query, args)
+    const result = await client.query(query, args)
+    if (result === null) throw notFound()
+    return result as NonNullable<FunctionReturnType<Q>>
   } catch (err) {
     const tag = err instanceof ConvexError ? (err.data as { tag?: string })?.tag : undefined
     if (tag === 'NotFound') throw notFound()

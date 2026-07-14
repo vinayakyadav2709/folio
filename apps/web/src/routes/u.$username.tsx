@@ -1,12 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { api } from '@folio/backend/api'
-import { PublicNotFound, ResumeView, loadPublic } from '#/features/portfolio'
+import { Outlet, createFileRoute } from '@tanstack/react-router'
+import { PublicNotFound } from '#/features/portfolio'
 
+// Layout for /u/$username/*: each child owns its own loader (index = portfolio,
+// $resumeSlug = resume) so no data is fetched twice.
 export const Route = createFileRoute('/u/$username')({
-  loader: ({ params }) => loadPublic(api.resumes.getPublished, { username: params.username }),
-  head: ({ loaderData }) => ({
-    meta: [{ title: loaderData ? `${loaderData.header.fullName} — folio` : 'folio' }],
-  }),
-  component: () => <ResumeView data={Route.useLoaderData()} />,
+  component: Outlet,
   notFoundComponent: PublicNotFound,
 })

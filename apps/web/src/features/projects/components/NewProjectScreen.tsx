@@ -13,7 +13,6 @@ import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { convexErrorData, errorMessage } from '../lib/convexError'
 import { useSelectedTeam } from '../lib/useSelectedTeam'
-import { LinksEditor, type Link as LinkRow } from './LinksEditor'
 import { Markdown } from './Markdown'
 import { TeamPicker } from './TeamPicker'
 
@@ -25,8 +24,11 @@ export function NewProjectScreen() {
   const navigate = useNavigate()
 
   const [name, setName] = useState('')
+  const [subtitle, setSubtitle] = useState('')
+  const [brief, setBrief] = useState('')
   const [description, setDescription] = useState('')
-  const [links, setLinks] = useState<LinkRow[]>([])
+  const [demoUrl, setDemoUrl] = useState('')
+  const [githubUrl, setGithubUrl] = useState('')
   const [saving, setSaving] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiNoKey, setAiNoKey] = useState(false)
@@ -66,7 +68,10 @@ export function NewProjectScreen() {
         teamId: teamId as Id<'teams'>,
         name: name.trim(),
         description,
-        links: links.filter((l) => l.label.trim() && l.url.trim()),
+        subtitle: subtitle.trim() || undefined,
+        brief: brief.trim() || undefined,
+        demoUrl: demoUrl.trim() || undefined,
+        githubUrl: githubUrl.trim() || undefined,
       })
       navigate({ to: '/dashboard/projects/$projectId', params: { projectId } })
     } catch (err) {
@@ -146,6 +151,27 @@ export function NewProjectScreen() {
             </div>
 
             <div className="flex flex-col gap-2">
+              <Label htmlFor="project-subtitle">Subtitle</Label>
+              <Input
+                id="project-subtitle"
+                value={subtitle}
+                onChange={(e) => setSubtitle(e.target.value)}
+                placeholder="One line — e.g. Realtime collaborative editor"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="project-brief">Brief</Label>
+              <Textarea
+                id="project-brief"
+                value={brief}
+                onChange={(e) => setBrief(e.target.value)}
+                placeholder="One-paragraph summary of what this is."
+                className="min-h-20 resize-y text-sm"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between gap-2">
                 <Label htmlFor="project-description">Description</Label>
                 <Button
@@ -178,7 +204,27 @@ export function NewProjectScreen() {
               />
             </div>
 
-            <LinksEditor links={links} onChange={setLinks} />
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="project-demo">Demo URL</Label>
+              <Input
+                id="project-demo"
+                type="url"
+                value={demoUrl}
+                onChange={(e) => setDemoUrl(e.target.value)}
+                placeholder="https://myapp.dev"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="project-github">GitHub URL</Label>
+              <Input
+                id="project-github"
+                type="url"
+                value={githubUrl}
+                onChange={(e) => setGithubUrl(e.target.value)}
+                placeholder="https://github.com/you/project"
+              />
+            </div>
 
             {error && <p className="text-destructive text-sm">{error}</p>}
           </CardPanel>
