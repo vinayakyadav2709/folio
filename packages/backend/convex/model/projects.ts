@@ -2,41 +2,77 @@ import { Effect } from 'effect'
 import type { Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import { getOrFail, requireAdmin, requireMembership, requireUserId } from '../lib/access'
+import { slugify, uniqueSlug } from '../lib/slug'
 
 type Link = { label: string; url: string }
+
+// A slug is unique within its team (public URL /p/$teamSlug/$projectSlug).
+const teamProjectSlug = (ctx: MutationCtx, teamId: Id<'teams'>, name: string) =>
+  uniqueSlug(slugify(name), (slug) =>
+    Effect.promise(() =>
+      ctx.db
+        .query('projects')
+        .withIndex('by_team_slug', (q) => q.eq('teamId', teamId).eq('slug', slug))
+        .unique(),
+    ).pipe(Effect.map(Boolean)),
+  )
 
 export const createProject = Effect.fn('projects.createProject')(function* (
   ctx: MutationCtx,
   teamId: Id<'teams'>,
-  name: string,
-  description: string,
-  links: Link[],
+  args: {
+    name: string
+    description: string
+    subtitle?: string
+    brief?: string
+    demoUrl?: string
+    githubUrl?: string
+    links?: Link[]
+  },
 ) {
   const userId = yield* requireUserId(ctx)
   yield* requireMembership(ctx, teamId, userId)
+  const slug = yield* teamProjectSlug(ctx, teamId, args.name)
   return yield* Effect.promise(() =>
     ctx.db.insert('projects', {
       teamId,
       ownerId: userId,
-      name,
-      description,
-      links,
+      name: args.name,
+      slug,
+      subtitle: args.subtitle,
+      brief: args.brief,
+      description: args.description,
+      demoUrl: args.demoUrl,
+      githubUrl: args.githubUrl,
+      links: args.links ?? [],
       screenshotIds: [],
       updatedAt: Date.now(),
     }),
   )
 })
 
-// The team pool is collaborative: any member may edit.
+// The team pool is collaborative: any member may edit. The slug never changes
+// on rename (URLs stay stable) — but legacy rows without one get backfilled.
 export const updateProject = Effect.fn('projects.updateProject')(function* (
   ctx: MutationCtx,
   projectId: Id<'projects'>,
-  patch: { name?: string; description?: string; links?: Link[] },
+  patch: {
+    name?: string
+    description?: string
+    subtitle?: string
+    brief?: string
+    demoUrl?: string
+    githubUrl?: string
+    links?: Link[]
+  },
 ) {
   const userId = yield* requireUserId(ctx)
   const project = yield* getOrFail(ctx.db.get(projectId), 'Project')
   yield* requireMembership(ctx, project.teamId, userId)
-  yield* Effect.promise(() => ctx.db.patch(projectId, { ...patch, updatedAt: Date.now() }))
+  const slug = project.slug ?? (yield* teamProjectSlug(ctx, project.teamId, project.name))
+  yield* Effect.promise(() =>
+    ctx.db.patch(projectId, { ...patch, slug, updatedAt: Date.now() }),
+  )
   return null
 })
 
@@ -145,26 +181,6 @@ export const removeScreenshot = Effect.fn('projects.removeScreenshot')(function*
   // Drop the blob too so we don't leak orphaned storage.
   yield* Effect.promise(() => ctx.storage.delete(storageId))
   return null
-})
-
-// Public share page (/p/$projectId): no auth, non-sensitive fields only.
-export const getPublicProject = Effect.fn('projects.getPublicProject')(function* (
-  ctx: QueryCtx,
-  projectId: Id<'projects'>,
-) {
-  const project = yield* getOrFail(ctx.db.get(projectId), 'Project')
-  const urls = yield* Effect.forEach(
-    project.screenshotIds,
-    (id) => Effect.promise(() => ctx.storage.getUrl(id)),
-    { concurrency: 'unbounded' },
-  )
-  return {
-    name: project.name,
-    description: project.description,
-    links: project.links,
-    updatedAt: project.updatedAt,
-    screenshotUrls: urls.filter((u): u is string => u !== null),
-  }
 })
 
 // One contributions row per (project, user).

@@ -1,6 +1,5 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
-import { vBlock, vTheme } from './schema'
 import { run } from './lib/errors'
 import * as Snapshots from './model/snapshots'
 
@@ -19,6 +18,7 @@ const vResumeDoc = v.object({
   _creationTime: v.number(),
   userId: v.string(),
   name: v.string(),
+  slug: v.optional(v.string()),
   username: v.optional(v.string()),
   publishedSnapshotId: v.optional(v.id('snapshots')),
 })
@@ -53,12 +53,6 @@ export const deleteResume = mutation({
   handler: (ctx, args) => run(Snapshots.deleteResume(ctx, args.resumeId)),
 })
 
-export const setUsername = mutation({
-  args: { resumeId: v.id('resumes'), username: v.string() },
-  returns: v.null(),
-  handler: (ctx, args) => run(Snapshots.setUsername(ctx, args.resumeId, args.username)),
-})
-
 export const publish = mutation({
   args: { resumeId: v.id('resumes'), snapshotId: v.id('snapshots') },
   returns: v.null(),
@@ -69,16 +63,4 @@ export const unpublish = mutation({
   args: { resumeId: v.id('resumes') },
   returns: v.null(),
   handler: (ctx, args) => run(Snapshots.unpublish(ctx, args.resumeId)),
-})
-
-// Public — no auth. Powers /u/$username.
-export const getPublished = query({
-  args: { username: v.string() },
-  returns: v.object({
-    name: v.string(),
-    header: vHeader,
-    blocks: v.array(vBlock),
-    theme: vTheme,
-  }),
-  handler: (ctx, args) => run(Snapshots.getPublished(ctx, args.username)),
 })

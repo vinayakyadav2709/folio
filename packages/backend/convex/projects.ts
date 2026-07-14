@@ -11,7 +11,12 @@ const vProject = {
   teamId: v.id('teams'),
   ownerId: v.string(),
   name: v.string(),
+  slug: v.optional(v.string()),
+  subtitle: v.optional(v.string()),
+  brief: v.optional(v.string()),
   description: v.string(),
+  demoUrl: v.optional(v.string()),
+  githubUrl: v.optional(v.string()),
   links: v.array(vLink),
   screenshotIds: v.array(v.id('_storage')),
   updatedAt: v.number(),
@@ -30,11 +35,14 @@ export const createProject = mutation({
     teamId: v.id('teams'),
     name: v.string(),
     description: v.string(),
-    links: v.array(vLink),
+    subtitle: v.optional(v.string()),
+    brief: v.optional(v.string()),
+    demoUrl: v.optional(v.string()),
+    githubUrl: v.optional(v.string()),
+    links: v.optional(v.array(vLink)),
   },
   returns: v.id('projects'),
-  handler: (ctx, { teamId, name, description, links }) =>
-    run(Projects.createProject(ctx, teamId, name, description, links)),
+  handler: (ctx, { teamId, ...args }) => run(Projects.createProject(ctx, teamId, args)),
 })
 
 export const updateProject = mutation({
@@ -42,6 +50,10 @@ export const updateProject = mutation({
     projectId: v.id('projects'),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
+    subtitle: v.optional(v.string()),
+    brief: v.optional(v.string()),
+    demoUrl: v.optional(v.string()),
+    githubUrl: v.optional(v.string()),
     links: v.optional(v.array(vLink)),
   },
   returns: v.null(),
@@ -83,16 +95,4 @@ export const removeScreenshot = mutation({
   returns: v.null(),
   handler: (ctx, { projectId, storageId }) =>
     run(Projects.removeScreenshot(ctx, projectId, storageId)),
-})
-
-export const getPublicProject = query({
-  args: { projectId: v.id('projects') },
-  returns: v.object({
-    name: v.string(),
-    description: v.string(),
-    links: v.array(vLink),
-    updatedAt: v.number(),
-    screenshotUrls: v.array(v.string()),
-  }),
-  handler: (ctx, { projectId }) => run(Projects.getPublicProject(ctx, projectId)),
 })

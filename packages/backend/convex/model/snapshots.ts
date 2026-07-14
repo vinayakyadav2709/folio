@@ -5,6 +5,7 @@ import type { MutationCtx, QueryCtx } from '../_generated/server'
 import type { vBlock, vTheme } from '../schema'
 import { getOrFail, requireUserId, type Ctx } from '../lib/access'
 import { Forbidden, Invalid, NotFound } from '../lib/errors'
+import { slugify, uniqueSlug } from '../lib/slug'
 
 // Types flow from schema — never hand-written duplicates.
 export type Block = Infer<typeof vBlock>
@@ -41,12 +42,26 @@ const getOwnedBranch = (ctx: Ctx, branchId: Id<'branches'>, userId: string) =>
 
 // --- resumes ----------------------------------------------------------------
 
+// A resume slug is unique per user (public URL /u/$username/$resumeSlug).
+const userResumeSlug = (ctx: MutationCtx, userId: string, name: string) =>
+  uniqueSlug(slugify(name), (slug) =>
+    Effect.promise(() =>
+      ctx.db
+        .query('resumes')
+        .withIndex('by_user_slug', (q) => q.eq('userId', userId).eq('slug', slug))
+        .unique(),
+    ).pipe(Effect.map(Boolean)),
+  )
+
 export const createResume = Effect.fn('snapshots.createResume')(function* (
   ctx: MutationCtx,
   args: { name: string; header: Header },
 ) {
   const userId = yield* requireUserId(ctx)
-  const resumeId = yield* Effect.promise(() => ctx.db.insert('resumes', { userId, name: args.name }))
+  const slug = yield* userResumeSlug(ctx, userId, args.name)
+  const resumeId = yield* Effect.promise(() =>
+    ctx.db.insert('resumes', { userId, name: args.name, slug }),
+  )
   const branchId = yield* Effect.promise(() =>
     ctx.db.insert('branches', { resumeId, name: 'main', color: '#6366f1' }),
   )
@@ -88,8 +103,10 @@ export const renameResume = Effect.fn('snapshots.renameResume')(function* (
   name: string,
 ) {
   const userId = yield* requireUserId(ctx)
-  yield* getOwnedResume(ctx, resumeId, userId)
-  yield* Effect.promise(() => ctx.db.patch('resumes', resumeId, { name }))
+  const resume = yield* getOwnedResume(ctx, resumeId, userId)
+  // Slug is stable across renames; only legacy rows without one get backfilled.
+  const slug = resume.slug ?? (yield* userResumeSlug(ctx, userId, name))
+  yield* Effect.promise(() => ctx.db.patch('resumes', resumeId, { name, slug }))
   return null
 })
 
@@ -129,41 +146,20 @@ export const deleteResume = Effect.fn('snapshots.deleteResume')(function* (
 
 // --- publishing -------------------------------------------------------------
 
-const USERNAME_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/
-
-export const setUsername = Effect.fn('snapshots.setUsername')(function* (
-  ctx: MutationCtx,
-  resumeId: Id<'resumes'>,
-  username: string,
-) {
-  const userId = yield* requireUserId(ctx)
-  yield* getOwnedResume(ctx, resumeId, userId)
-  if (!USERNAME_RE.test(username))
-    return yield* new Invalid({ message: 'Username must be lowercase kebab-case' })
-  const taken = yield* Effect.promise(() =>
-    ctx.db
-      .query('resumes')
-      .withIndex('by_username', (q) => q.eq('username', username))
-      .unique(),
-  )
-  if (taken && taken._id !== resumeId)
-    return yield* new Invalid({ message: 'Username already taken' })
-  yield* Effect.promise(() => ctx.db.patch('resumes', resumeId, { username }))
-  return null
-})
-
 export const publish = Effect.fn('snapshots.publish')(function* (
   ctx: MutationCtx,
   resumeId: Id<'resumes'>,
   snapshotId: Id<'snapshots'>,
 ) {
   const userId = yield* requireUserId(ctx)
-  yield* getOwnedResume(ctx, resumeId, userId)
+  const resume = yield* getOwnedResume(ctx, resumeId, userId)
   const snapshot = yield* getOrFail(ctx.db.get('snapshots', snapshotId), 'Snapshot')
   if (snapshot.resumeId !== resumeId)
     return yield* new Invalid({ message: 'Snapshot belongs to a different resume' })
+  // Backfill a slug for legacy rows so the public URL resolves.
+  const slug = resume.slug ?? (yield* userResumeSlug(ctx, userId, resume.name))
   yield* Effect.promise(() =>
-    ctx.db.patch('resumes', resumeId, { publishedSnapshotId: snapshotId }),
+    ctx.db.patch('resumes', resumeId, { publishedSnapshotId: snapshotId, slug }),
   )
   return null
 })
@@ -343,27 +339,5 @@ export const getTree = Effect.fn('snapshots.getTree')(function* (
       sentTo: s.sentTo,
       blockCount: s.blocks.length,
     })),
-  }
-})
-
-// Public — NO auth. Powers /u/$username.
-export const getPublished = Effect.fn('snapshots.getPublished')(function* (
-  ctx: QueryCtx,
-  username: string,
-) {
-  const resume = yield* getOrFail(
-    ctx.db
-      .query('resumes')
-      .withIndex('by_username', (q) => q.eq('username', username))
-      .unique(),
-    'Page',
-  )
-  if (!resume.publishedSnapshotId) return yield* new NotFound({ message: 'Page not found' })
-  const snapshot = yield* getOrFail(ctx.db.get('snapshots', resume.publishedSnapshotId), 'Page')
-  return {
-    name: resume.name,
-    header: snapshot.header,
-    blocks: snapshot.blocks,
-    theme: snapshot.theme,
   }
 })
