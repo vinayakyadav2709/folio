@@ -1,0 +1,39 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install --frozen-lockfile
+
+      - name: Deploy Convex functions (prod)
+        working-directory: packages/backend
+        run: bunx convex deploy -y
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+
+      - name: Build web app
+        working-directory: apps/web
+        run: bun run build
+        env:
+          VITE_CONVEX_URL: https://giddy-dogfish-683.convex.cloud
+          VITE_CONVEX_SITE_URL: https://giddy-dogfish-683.convex.site
+
+      - name: Deploy Cloudflare Worker
+        working-directory: apps/web
+        run: bunx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: b7874374e0d9e3e3e21367e45119a56a
