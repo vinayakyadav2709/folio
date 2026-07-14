@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "turbo dev",
+    "dev": "portless proxy start --port 8080 --no-tls; turbo dev",
     "build": "turbo build",
     "typecheck": "turbo typecheck",
     "lint": "turbo lint"
