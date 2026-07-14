@@ -4,6 +4,7 @@ import { AuthBoundary } from '@convex-dev/better-auth/react'
 import { api } from '@folio/backend/api'
 import { ShellSidebar } from '#/components/shared/shell-sidebar'
 import { ShellTopbar } from '#/components/shared/shell-topbar'
+import { WarmQueries } from '#/components/shared/warm-queries'
 import { authClient } from '#/lib/auth-client'
 
 // getAuthUser throws only when the session is invalid — for this query any
@@ -45,6 +46,7 @@ function DashboardShell() {
 
   return (
     <div className="flex h-svh bg-background text-foreground">
+      <WarmQueries />
       <div className="hidden w-64 shrink-0 border-r border-border/60 md:block">
         <ShellSidebar />
       </div>
