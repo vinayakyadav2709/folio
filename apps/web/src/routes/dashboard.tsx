@@ -52,7 +52,7 @@ function DashboardShell() {
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <ShellTopbar user={user} onSignOut={signOut} />
-        <main className="flex-1 overflow-y-auto px-6 py-8">
+        <main className="min-h-0 flex-1 overflow-y-auto px-6 py-8">
           <Outlet />
         </main>
       </div>
