@@ -1,7 +1,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tanstack-start-app",
+  "name": "folio",
   "compatibility_date": "2025-09-02",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry"
+  "main": "@tanstack/react-start/server-entry",
+  "vars": {
+    "VITE_CONVEX_URL": "https://giddy-dogfish-683.convex.cloud",
+    "VITE_CONVEX_SITE_URL": "https://giddy-dogfish-683.convex.site"
+  }
 }
