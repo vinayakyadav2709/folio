@@ -1,0 +1,11 @@
+url: http://127.0.0.1:4100/u/maestro-tester
+name: public profile shows everything
+---
+- extendedWaitUntil:
+    visible: "Maestro Tester"
+    timeout: 20000
+- assertVisible: "Backend Engineer"
+- assertVisible: "Languages"
+- assertVisible: "IIT Delhi"
+- assertVisible: "Chat Server"
+- assertVisible: "Main Resume"

@@ -1,0 +1,8 @@
+url: http://127.0.0.1:4100/p/maestro-team/chat-server
+name: public project page
+---
+- extendedWaitUntil:
+    visible: "Chat Server"
+    timeout: 20000
+- assertVisible: "Realtime websocket chat backend"
+- assertVisible: "Maestro Tester"

@@ -1,0 +1,7 @@
+url: http://127.0.0.1:4100/u/maestro-tester/main-resume
+name: public resume with PDF download
+---
+- extendedWaitUntil:
+    visible: "Maestro Tester"
+    timeout: 20000
+- assertVisible: "Download PDF"

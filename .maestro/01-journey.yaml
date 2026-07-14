@@ -1,0 +1,155 @@
+url: http://127.0.0.1:4100
+name: signup → profile → team → project → resume → publish
+---
+# ---- sign up ----
+- extendedWaitUntil:
+    visible: "Sign up"
+    timeout: 45000
+- tapOn: "Sign up"
+- tapOn:
+    css: "#auth-name"
+- inputText: "Maestro Tester"
+- tapOn:
+    css: "#auth-email"
+- inputText: "maestro@folio.dev"
+- tapOn:
+    css: "#auth-password"
+- inputText: "maestro-pass-1234"
+- tapOn: "Create account"
+- extendedWaitUntil:
+    visible: "Workspace"
+    timeout: 30000
+
+# ---- profile: username + contact ----
+- tapOn: "Settings"
+- extendedWaitUntil:
+    visible: "Claim"
+    timeout: 15000
+- tapOn:
+    css: "input[placeholder='ada-lovelace']"
+- inputText: "maestro-tester"
+- tapOn: "Claim"
+- extendedWaitUntil:
+    visible: "Change"
+    timeout: 15000
+- tapOn:
+    css: "input[placeholder='Ada Lovelace']"
+- inputText: "Maestro Tester"
+- tapOn:
+    css: "input[placeholder='Backend engineer · distributed systems']"
+- inputText: "Backend Engineer"
+- tapOn:
+    css: "input[placeholder='ada@example.com']"
+- inputText: "maestro@folio.dev"
+- tapOn:
+    css: "input[placeholder='Berlin, DE']"
+- inputText: "Remote"
+- tapOn:
+    css: "input[placeholder='https://github.com/…']"
+- inputText: "https://github.com/maestro-tester"
+# one skill category
+- tapOn: "Add category"
+- tapOn:
+    css: "input[placeholder='Category']"
+- inputText: "Languages"
+- tapOn:
+    css: "input[placeholder='TypeScript, Rust, Go']"
+- inputText: "TypeScript, Go"
+# one education entry
+- tapOn: "Add education"
+- tapOn:
+    css: "input[placeholder='MIT']"
+- inputText: "IIT Delhi"
+- tapOn:
+    css: "input[placeholder='B.S. in Computer Science']"
+- inputText: "B.Tech in Computer Science"
+- tapOn:
+    css: "input[placeholder='Aug 2021']"
+- inputText: "Aug 2021"
+- tapOn:
+    css: "input[placeholder='May 2025']"
+- inputText: "May 2025"
+- tapOn: "Save profile"
+- extendedWaitUntil:
+    visible: "Saved"
+    timeout: 15000
+
+# ---- team ----
+- tapOn: "Teams"
+- extendedWaitUntil:
+    visible: "Create your first team"
+    timeout: 15000
+- tapOn: "Create your first team"
+- tapOn:
+    css: "input[placeholder='Acme Inc']"
+- inputText: "Maestro Team"
+- tapOn:
+    css: "input[placeholder='acme-inc']"
+- inputText: "maestro-team"
+- tapOn: "Create"
+- extendedWaitUntil:
+    visible: "Maestro Team"
+    timeout: 15000
+
+# ---- project ----
+- tapOn: "Projects"
+- extendedWaitUntil:
+    visible: "Add project"
+    timeout: 15000
+- tapOn: "Add project"
+- extendedWaitUntil:
+    visible: "Create project"
+    timeout: 15000
+- tapOn:
+    css: "input[placeholder='Project name']"
+- inputText: "Chat Server"
+- tapOn:
+    css: "input[placeholder='One line — e.g. Realtime collaborative editor']"
+- inputText: "Realtime websocket chat backend"
+- tapOn:
+    css: "textarea[placeholder='One-paragraph summary of what this is.']"
+- inputText: "A websocket chat backend with presence and message history."
+- tapOn:
+    css: "textarea[placeholder='Write Markdown — headings, lists, code blocks…']"
+- inputText: "# Chat Server. Handles 10k concurrent connections with Redis presence."
+- tapOn:
+    css: "input[placeholder='https://myapp.dev']"
+- inputText: "https://chat.example.dev"
+- tapOn:
+    css: "input[placeholder='https://github.com/you/project']"
+- inputText: "https://github.com/maestro-tester/chat-server"
+- tapOn: "Create project"
+- extendedWaitUntil:
+    visible: "Realtime websocket chat backend"
+    timeout: 15000
+
+# ---- resume + publish ----
+- tapOn: "Resumes"
+- extendedWaitUntil:
+    visible: "Create resume"
+    timeout: 15000
+- tapOn: "Create resume"
+- tapOn:
+    css: "input[placeholder='Backend roles']"
+- inputText: "Main Resume"
+- tapOn:
+    css: "input[placeholder='Ada Lovelace']"
+- inputText: "Maestro Tester"
+- tapOn:
+    css: "input[placeholder='Software Engineer']"
+- inputText: "Backend Engineer"
+- tapOn:
+    css: "input[placeholder='ada@example.com']"
+- inputText: "maestro@folio.dev"
+- tapOn: "Create"
+- extendedWaitUntil:
+    visible: "Main Resume"
+    timeout: 15000
+- tapOn: "Publish"
+- extendedWaitUntil:
+    visible: "Publish main head"
+    timeout: 15000
+- tapOn: "Publish main head"
+- extendedWaitUntil:
+    visible: "/u/maestro-tester"
+    timeout: 15000
