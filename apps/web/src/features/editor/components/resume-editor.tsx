@@ -19,9 +19,12 @@ export type EditorView = 'edit' | 'history'
 
 // Spacious three-pane workspace: a fixed-width library rail, a fluid canvas, and
 // a settings + true-to-scale preview rail. Wide enough to breathe on large
-// screens, collapses to a single column below `lg`.
-const EDIT_GRID =
-  'grid grid-cols-1 items-start gap-8 lg:grid-cols-[13rem_minmax(0,1fr)_21rem] xl:grid-cols-[14rem_minmax(0,1fr)_23rem]'
+// screens, collapses to a single column below `lg`. The right rail is
+// expandable — wide mode gives the preview a near-full-size page.
+const editGrid = (wide: boolean) =>
+  wide
+    ? 'grid grid-cols-1 items-start gap-8 lg:grid-cols-[13rem_minmax(0,1fr)_minmax(24rem,38rem)] xl:grid-cols-[14rem_minmax(0,1fr)_minmax(28rem,42rem)]'
+    : 'grid grid-cols-1 items-start gap-8 lg:grid-cols-[13rem_minmax(0,1fr)_21rem] xl:grid-cols-[14rem_minmax(0,1fr)_23rem]'
 
 function BranchPill({ branch }: { branch: Doc<'branches'> }) {
   return (
@@ -135,7 +138,7 @@ export function ResumeEditor({
     return (
       <div className="flex flex-col gap-8">
         <TopBar name={resume?.name} branch={branch} view={view} onViewChange={onViewChange} />
-        <div className={EDIT_GRID}>
+        <div className={editGrid(false)}>
           <div className="flex flex-col gap-2">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-8 w-full rounded-lg" />
@@ -186,6 +189,7 @@ function EditorInner({
   const [header, setHeader] = useState(snapshot.header)
   const [theme, setTheme] = useState(snapshot.theme)
   const [message, setMessage] = useState('')
+  const [panelWide, setPanelWide] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -266,7 +270,7 @@ function EditorInner({
       />
       {error && <p className="-mt-4 text-destructive text-sm text-pretty">{error}</p>}
 
-      <div className={EDIT_GRID}>
+      <div className={editGrid(panelWide)}>
         <BlockLibrary onAdd={(block) => setBlocks((prev) => [...prev, block])} />
         <Canvas blocks={blocks} onChange={setBlocks} />
         <SidePanel
@@ -275,6 +279,8 @@ function EditorInner({
           onHeader={setHeader}
           theme={theme}
           onTheme={setTheme}
+          expanded={panelWide}
+          onToggleExpanded={() => setPanelWide((w) => !w)}
         />
       </div>
     </div>

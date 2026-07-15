@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { PencilIcon, PlusIcon, XIcon } from 'lucide-react'
+import { Maximize2Icon, Minimize2Icon, PencilIcon, PlusIcon, XIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
@@ -15,6 +15,8 @@ type Props = {
   onHeader: (header: Header) => void
   theme: Theme
   onTheme: (theme: Theme) => void
+  expanded: boolean
+  onToggleExpanded: () => void
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -127,7 +129,15 @@ function HeaderSection({ header, onHeader }: { header: Header; onHeader: (h: Hea
   )
 }
 
-export function SidePanel({ blocks, header, onHeader, theme, onTheme }: Props) {
+export function SidePanel({
+  blocks,
+  header,
+  onHeader,
+  theme,
+  onTheme,
+  expanded,
+  onToggleExpanded,
+}: Props) {
   return (
     <aside className="flex flex-col gap-3">
       <SectionLabel>Header</SectionLabel>
@@ -185,6 +195,16 @@ export function SidePanel({ blocks, header, onHeader, theme, onTheme }: Props) {
           <span className="relative inline-flex size-1.5 rounded-full bg-success" />
         </span>
         <span className="text-[10px] text-muted-foreground">live</span>
+        <span className="flex-1" />
+        <Button
+          size="icon-xs"
+          variant="ghost"
+          aria-label={expanded ? 'Shrink preview' : 'Expand preview'}
+          className="-my-1 hidden text-muted-foreground lg:inline-flex"
+          onClick={onToggleExpanded}
+        >
+          {expanded ? <Minimize2Icon /> : <Maximize2Icon />}
+        </Button>
       </div>
       <Preview blocks={blocks} header={header} theme={theme} />
     </aside>
