@@ -4,6 +4,7 @@ import { useMutation, useQuery } from 'convex/react'
 import { api } from '@folio/backend/api'
 import { FileTextIcon, PlusIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/shared/page-header'
 import {
   Dialog,
   DialogClose,
@@ -33,27 +34,29 @@ export function ResumesList() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="font-heading font-semibold text-2xl text-balance">Resumes</h1>
-          {resumes !== undefined && resumes.length > 0 && (
-            <p className="mt-0.5 text-muted-foreground text-sm tabular-nums">
-              {resumes.length} resume{resumes.length === 1 ? '' : 's'}, each with its own version
-              tree
-            </p>
-          )}
-        </div>
-        {resumes !== undefined && resumes.length > 0 && (
-          <CreateResumeDialog
-            trigger={
-              <Button>
-                <PlusIcon />
-                New resume
-              </Button>
-            }
-          />
-        )}
-      </div>
+      <PageHeader
+        eyebrow="Workspace"
+        title="Resumes"
+        description={
+          resumes === undefined
+            ? 'Loading your resumes…'
+            : resumes.length === 0
+              ? 'Compose, edit, and version resumes from your blocks.'
+              : `${resumes.length} resume${resumes.length === 1 ? '' : 's'}, each with its own version tree`
+        }
+        actions={
+          resumes !== undefined && resumes.length > 0 ? (
+            <CreateResumeDialog
+              trigger={
+                <Button>
+                  <PlusIcon />
+                  New resume
+                </Button>
+              }
+            />
+          ) : undefined
+        }
+      />
 
       {resumes === undefined ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link as RouterLink, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
-import { ArrowLeft, Check, Github, Globe, Link2, Pencil, Trash2 } from 'lucide-react'
+import { Check, Github, Globe, Link2, Pencil, Trash2 } from 'lucide-react'
 import { api } from '@folio/backend/api'
 import type { Id } from '@folio/backend/dataModel'
 import {
@@ -116,13 +116,6 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
 
   return (
     <div className="flex flex-col gap-6">
-      <RouterLink
-        to="/dashboard/projects"
-        className="inline-flex w-fit items-center gap-1.5 text-muted-foreground text-sm transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" /> Back to projects
-      </RouterLink>
-
       {editing ? (
         <div className="grid items-start gap-6 lg:grid-cols-2">
           <Card>
@@ -220,6 +213,14 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
       ) : (
         <>
           <PageHeader
+            eyebrow={
+              <RouterLink
+                to="/dashboard/projects"
+                className="transition-colors hover:text-foreground"
+              >
+                ← Projects
+              </RouterLink>
+            }
             title={
               <>
                 <Monogram name={project.name} className="size-11 shrink-0" />

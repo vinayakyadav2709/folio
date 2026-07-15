@@ -38,6 +38,7 @@ export function ProjectsListScreen() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
+        eyebrow="Workspace"
         title="Projects"
         description="Shared work from your team's pool."
         actions={

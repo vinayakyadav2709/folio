@@ -32,6 +32,7 @@ export function SettingsScreen() {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
       <PageHeader
+        eyebrow="Workspace"
         title="Settings"
         description="Manage your public profile, contact details, and AI keys."
       />

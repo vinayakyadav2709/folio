@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { CheckIcon, EllipsisIcon, PencilIcon, TrashIcon, XIcon } from 'lucide-react'
-import { useNavigate } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@folio/backend/api'
 import type { Id } from '@folio/backend/dataModel'
@@ -89,7 +89,11 @@ function TeamHeader({ team, isAdmin }: { team: TeamData['team']; isAdmin: boolea
 
   return (
     <PageHeader
-      eyebrow="Team"
+      eyebrow={
+        <Link to="/dashboard/teams" className="transition-colors hover:text-foreground">
+          ← Teams
+        </Link>
+      }
       title={
         <>
           <Avatar className={`size-11 rounded-xl ${toneFor(team._id)}`}>
