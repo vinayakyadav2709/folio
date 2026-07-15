@@ -57,9 +57,7 @@ function DashboardHome() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        eyebrow="Workspace"
         title={firstName ? `Welcome back, ${firstName}.` : 'Welcome back.'}
-        description="Jump into a section to keep building your portfolio."
         actions={
           profile?.username ? (
             <CopyLinkButton

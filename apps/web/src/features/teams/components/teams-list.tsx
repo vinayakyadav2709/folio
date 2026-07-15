@@ -33,13 +33,7 @@ export function TeamsList() {
   return (
     <div className="flex w-full flex-col gap-6">
       <PageHeader
-        eyebrow="Workspace"
         title="Teams"
-        description={
-          teams === undefined
-            ? 'Loading your teams…'
-            : `${teams.length} ${teams.length === 1 ? 'team' : 'teams'}`
-        }
         actions={<CreateTeamDialog />}
       />
 

@@ -227,17 +227,6 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
                 {project.name}
               </>
             }
-            description={
-              <>
-                {project.subtitle && (
-                  <span className="block text-pretty">{project.subtitle}</span>
-                )}
-                <span className="block">
-                  Owned by{' '}
-                  <span className="text-foreground">{nameOf(project.ownerId)}</span>
-                </span>
-              </>
-            }
             actions={
               <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-1 shadow-xs/5">
               <Button

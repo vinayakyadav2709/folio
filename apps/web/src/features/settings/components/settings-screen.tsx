@@ -30,11 +30,9 @@ export function SettingsScreen() {
   const form = useProfileForm(profile)
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+    <div className="flex w-full flex-col gap-8">
       <PageHeader
-        eyebrow="Workspace"
         title="Settings"
-        description="Manage your public profile, contact details, and AI keys."
       />
       <div className="grid gap-10 md:grid-cols-[200px_minmax(0,1fr)]">
       <aside className="md:sticky md:top-0 md:self-start md:py-1">

@@ -35,15 +35,7 @@ export function ResumesList() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        eyebrow="Workspace"
         title="Resumes"
-        description={
-          resumes === undefined
-            ? 'Loading your resumes…'
-            : resumes.length === 0
-              ? 'Compose, edit, and version resumes from your blocks.'
-              : `${resumes.length} resume${resumes.length === 1 ? '' : 's'}, each with its own version tree`
-        }
         actions={
           resumes !== undefined && resumes.length > 0 ? (
             <CreateResumeDialog
