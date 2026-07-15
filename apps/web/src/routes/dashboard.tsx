@@ -2,8 +2,8 @@ import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { AuthBoundary } from '@convex-dev/better-auth/react'
 import { api } from '@folio/backend/api'
-import { ShellSidebar } from '#/components/shared/shell-sidebar'
-import { ShellTopbar } from '#/components/shared/shell-topbar'
+import { ShellRail } from '#/components/shared/shell-sidebar'
+import { ShellMobileBar } from '#/components/shared/shell-topbar'
 import { WarmQueries } from '#/components/shared/warm-queries'
 import { authClient } from '#/lib/auth-client'
 
@@ -47,13 +47,13 @@ function DashboardShell() {
   return (
     <div className="flex h-svh bg-background text-foreground">
       <WarmQueries />
-      <div className="hidden w-64 shrink-0 border-r border-border/60 md:block">
-        <ShellSidebar />
-      </div>
+      <ShellRail user={user} onSignOut={signOut} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <ShellTopbar user={user} onSignOut={signOut} />
-        <main className="min-h-0 flex-1 overflow-y-auto px-6 py-8">
-          <Outlet />
+        <ShellMobileBar user={user} onSignOut={signOut} />
+        <main className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-7xl px-6 py-8 lg:px-10">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

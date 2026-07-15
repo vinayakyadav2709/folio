@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
+import { PageHeader } from '@/components/shared/page-header'
 import { errorMessage } from '../lib/convexError'
 import { Monogram } from './avatars'
 import { ContributionSection } from './ContributionSection'
@@ -218,23 +219,26 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
         </div>
       ) : (
         <>
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex min-w-0 items-start gap-3">
-              <Monogram name={project.name} className="mt-0.5 size-11 shrink-0" />
-              <div className="min-w-0">
-                <h1 className="font-heading font-semibold text-2xl text-balance">{project.name}</h1>
+          <PageHeader
+            title={
+              <>
+                <Monogram name={project.name} className="size-11 shrink-0" />
+                {project.name}
+              </>
+            }
+            description={
+              <>
                 {project.subtitle && (
-                  <p className="mt-0.5 text-pretty text-muted-foreground text-sm">
-                    {project.subtitle}
-                  </p>
+                  <span className="block text-pretty">{project.subtitle}</span>
                 )}
-                <p className="mt-0.5 text-muted-foreground text-sm">
+                <span className="block">
                   Owned by{' '}
                   <span className="text-foreground">{nameOf(project.ownerId)}</span>
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-1 shadow-xs/5">
+                </span>
+              </>
+            }
+            actions={
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border bg-card p-1 shadow-xs/5">
               <Button
                 variant="ghost"
                 size="sm"
@@ -286,8 +290,9 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
                   </AlertDialogPopup>
                 </AlertDialog>
               )}
-            </div>
-          </div>
+              </div>
+            }
+          />
 
           {error && <p className="text-destructive text-sm">{error}</p>}
 

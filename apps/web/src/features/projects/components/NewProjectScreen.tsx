@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
+import { PageHeader } from '@/components/shared/page-header'
 import { convexErrorData, errorMessage } from '../lib/convexError'
 import { useSelectedTeam } from '../lib/useSelectedTeam'
 import { Markdown } from './Markdown'
@@ -102,30 +103,32 @@ export function NewProjectScreen() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
+      <PageHeader
+        eyebrow={
           <Link
             to="/dashboard/projects"
-            className="text-muted-foreground text-xs transition-colors hover:text-foreground"
+            className="transition-colors hover:text-foreground"
           >
             ← Projects
           </Link>
-          <h1 className="font-heading font-semibold text-2xl text-balance">New project</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" render={<Link to="/dashboard/projects" />}>
-            Cancel
-          </Button>
-          <Button
-            className="active:scale-[0.96]"
-            onClick={onSave}
-            loading={saving}
-            disabled={!name.trim() || saving}
-          >
-            Create project
-          </Button>
-        </div>
-      </div>
+        }
+        title="New project"
+        actions={
+          <>
+            <Button variant="ghost" render={<Link to="/dashboard/projects" />}>
+              Cancel
+            </Button>
+            <Button
+              className="active:scale-[0.96]"
+              onClick={onSave}
+              loading={saving}
+              disabled={!name.trim() || saving}
+            >
+              Create project
+            </Button>
+          </>
+        }
+      />
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
         {/* Left pane — the editor form */}

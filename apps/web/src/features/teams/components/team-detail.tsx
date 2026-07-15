@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { CopyLinkButton } from '@/components/shared/copy-link-button'
+import { PageHeader } from '@/components/shared/page-header'
 import { Input } from '@/components/ui/input'
 import {
   Menu,
@@ -37,7 +38,7 @@ export function TeamDetail({ teamId }: { teamId: Id<'teams'> }) {
 
   if (data === undefined || me === undefined) {
     return (
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
+      <div className="flex w-full flex-col gap-8">
         <Skeleton className="h-9 w-48" />
         <Skeleton className="h-32 w-full rounded-xl" />
       </div>
@@ -48,11 +49,8 @@ export function TeamDetail({ teamId }: { teamId: Id<'teams'> }) {
   const isAdmin = data.members.some((m) => m.userId === myId && m.role === 'admin')
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-10">
-      <div className="flex items-start justify-between gap-4">
-        <TeamName team={data.team} isAdmin={isAdmin} />
-        <CopyLinkButton path={`/team/${data.team.slug}`} label="Copy team link" />
-      </div>
+    <div className="flex w-full flex-col gap-10">
+      <TeamHeader team={data.team} isAdmin={isAdmin} />
 
       <Members teamId={teamId} members={data.members} isAdmin={isAdmin} myId={myId} />
 
@@ -71,7 +69,7 @@ export function TeamDetail({ teamId }: { teamId: Id<'teams'> }) {
 
 type TeamData = NonNullable<ReturnType<typeof useQuery<typeof api.teams.getTeam>>>
 
-function TeamName({ team, isAdmin }: { team: TeamData['team']; isAdmin: boolean }) {
+function TeamHeader({ team, isAdmin }: { team: TeamData['team']; isAdmin: boolean }) {
   const updateTeam = useMutation(api.teams.updateTeam)
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(team.name)
@@ -90,57 +88,64 @@ function TeamName({ team, isAdmin }: { team: TeamData['team']; isAdmin: boolean 
   }
 
   return (
-    <header className="flex items-center gap-4">
-      <Avatar className={`size-12 rounded-xl ${toneFor(team._id)}`}>
-        <AvatarFallback className="rounded-xl bg-transparent font-semibold text-sm">
-          {initials(team.name)}
-        </AvatarFallback>
-      </Avatar>
-
-      <div className="flex min-w-0 flex-col gap-1">
-        {isAdmin && editing ? (
-          <div className="flex items-center gap-2">
-            <Input
-              value={name}
-              autoFocus
-              onChange={(e) => setName(e.target.value)}
-              className="h-9 max-w-xs"
-            />
-            <Button size="icon-sm" onClick={onSave} disabled={!name} aria-label="Save name">
-              <CheckIcon />
-            </Button>
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              aria-label="Cancel"
-              onClick={() => {
-                setName(team.name)
-                setError(null)
-                setEditing(false)
-              }}
-            >
-              <XIcon />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <h1 className="text-balance font-heading font-semibold text-2xl">{team.name}</h1>
-            {isAdmin && (
-              <Button
-                size="icon-xs"
-                variant="ghost"
-                aria-label="Rename team"
-                onClick={() => setEditing(true)}
-              >
-                <PencilIcon />
+    <PageHeader
+      eyebrow="Team"
+      title={
+        <>
+          <Avatar className={`size-11 rounded-xl ${toneFor(team._id)}`}>
+            <AvatarFallback className="rounded-xl bg-transparent font-semibold text-sm">
+              {initials(team.name)}
+            </AvatarFallback>
+          </Avatar>
+          {isAdmin && editing ? (
+            <span className="flex items-center gap-2">
+              <Input
+                value={name}
+                autoFocus
+                onChange={(e) => setName(e.target.value)}
+                className="h-9 max-w-xs"
+              />
+              <Button size="icon-sm" onClick={onSave} disabled={!name} aria-label="Save name">
+                <CheckIcon />
               </Button>
-            )}
-          </div>
-        )}
-        <p className="font-mono text-muted-foreground text-sm">{team.slug}</p>
-        {error && <p className="text-destructive text-sm">{error}</p>}
-      </div>
-    </header>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label="Cancel"
+                onClick={() => {
+                  setName(team.name)
+                  setError(null)
+                  setEditing(false)
+                }}
+              >
+                <XIcon />
+              </Button>
+            </span>
+          ) : (
+            <span className="flex items-center gap-2">
+              {team.name}
+              {isAdmin && (
+                <Button
+                  size="icon-xs"
+                  variant="ghost"
+                  aria-label="Rename team"
+                  onClick={() => setEditing(true)}
+                >
+                  <PencilIcon />
+                </Button>
+              )}
+            </span>
+          )}
+        </>
+      }
+      meta={
+        <>
+          <p className="font-mono text-muted-foreground text-sm">{team.slug}</p>
+          {error && <p className="mt-1 text-destructive text-sm">{error}</p>}
+        </>
+      }
+      actions={<CopyLinkButton path={`/team/${team.slug}`} label="Copy team link" />}
+    />
   )
 }
 

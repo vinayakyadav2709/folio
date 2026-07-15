@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@folio/backend/api'
-import { AtSignIcon, GraduationCapIcon, KeyIcon, LinkIcon, UserIcon, WrenchIcon } from 'lucide-react'
+import { GraduationCapIcon, KeyIcon, LinkIcon, UserIcon, WrenchIcon } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { PageHeader } from '@/components/shared/page-header'
 import { useProfileForm } from '../lib/use-profile-form'
 import { AiKeysCard } from './ai-keys-card'
 import {
@@ -29,18 +30,14 @@ export function SettingsScreen() {
   const form = useProfileForm(profile)
 
   return (
-    <div className="mx-auto grid w-full max-w-4xl gap-10 md:grid-cols-[200px_minmax(0,1fr)]">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+      <PageHeader
+        title="Settings"
+        description="Manage your public profile, contact details, and AI keys."
+      />
+      <div className="grid gap-10 md:grid-cols-[200px_minmax(0,1fr)]">
       <aside className="md:sticky md:top-0 md:self-start md:py-1">
-        <div className="flex items-center gap-2 md:hidden">
-          <AtSignIcon className="size-4 text-muted-foreground" />
-          <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.3em]">
-            Settings
-          </span>
-        </div>
-        <div className="hidden font-mono text-[10px] text-muted-foreground uppercase tracking-[0.3em] md:block">
-          Settings
-        </div>
-        <ul className="mt-3 flex gap-0.5 overflow-x-auto md:mt-4 md:flex-col">
+        <ul className="flex gap-0.5 overflow-x-auto md:flex-col">
           {NAV.map(({ id, label, icon: Icon }) => (
             <li key={id}>
               <button
@@ -77,6 +74,7 @@ export function SettingsScreen() {
         ) : (
           <EducationSection form={form} />
         )}
+      </div>
       </div>
     </div>
   )

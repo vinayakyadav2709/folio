@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Spinner } from '@/components/ui/spinner'
+import { PageHeader } from '@/components/shared/page-header'
 import { useSelectedTeam } from '../lib/useSelectedTeam'
 import { AvatarStack, hueFrom, initials } from './avatars'
 import { TeamPicker } from './TeamPicker'
@@ -36,15 +37,15 @@ export function ProjectsListScreen() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="font-heading font-semibold text-2xl text-balance">Projects</h1>
-          <p className="text-muted-foreground text-sm">Shared work from your team's pool.</p>
-        </div>
-        <Button className="active:scale-[0.96]" render={<Link to="/dashboard/projects/new" />}>
-          <Plus /> Add project
-        </Button>
-      </div>
+      <PageHeader
+        title="Projects"
+        description="Shared work from your team's pool."
+        actions={
+          <Button className="active:scale-[0.96]" render={<Link to="/dashboard/projects/new" />}>
+            <Plus /> Add project
+          </Button>
+        }
+      />
 
       {teams === undefined ? (
         <div className="grid place-items-center py-20">

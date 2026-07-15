@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/table'
 import { initials, toneFor } from '../lib/avatar'
 import { CopyLinkButton } from '@/components/shared/copy-link-button'
+import { PageHeader } from '@/components/shared/page-header'
 import { CreateTeamDialog } from './create-team-dialog'
 import { RoleBadge } from './role-badge'
 import { PendingInvites } from './pending-invites'
@@ -30,18 +31,16 @@ export function TeamsList() {
   const teams = useQuery(api.teams.listMyTeams)
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-      <header className="flex items-end justify-between gap-4">
-        <div>
-          <h1 className="font-heading font-semibold text-2xl">Teams</h1>
-          <p className="text-muted-foreground text-sm">
-            {teams === undefined
-              ? 'Loading your teams…'
-              : `${teams.length} ${teams.length === 1 ? 'team' : 'teams'}`}
-          </p>
-        </div>
-        <CreateTeamDialog />
-      </header>
+    <div className="flex w-full flex-col gap-6">
+      <PageHeader
+        title="Teams"
+        description={
+          teams === undefined
+            ? 'Loading your teams…'
+            : `${teams.length} ${teams.length === 1 ? 'team' : 'teams'}`
+        }
+        actions={<CreateTeamDialog />}
+      />
 
       <PendingInvites />
 
