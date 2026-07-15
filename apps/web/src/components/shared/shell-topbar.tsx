@@ -21,7 +21,7 @@ function usePageTitle(): string {
     .find((item) =>
       item.exact ? pathname === item.to : pathname.startsWith(item.to),
     )
-  return match?.label ?? 'Home'
+  return match?.label ?? 'Dashboard'
 }
 
 /**

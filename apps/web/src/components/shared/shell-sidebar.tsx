@@ -36,11 +36,26 @@ export interface NavItem {
   Icon: ComponentType<{ className?: string }>
 }
 
+// Rail nav, grouped like the devl.dev workspace-rail: ungrouped primary items
+// first, then labeled sections. Settings is reachable from the profile menu
+// only — it has no rail entry.
+export const SHELL_NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
+  {
+    items: [{ to: '/dashboard', label: 'Dashboard', exact: true, Icon: LayoutDashboardIcon }],
+  },
+  {
+    label: 'Workspace',
+    items: [
+      { to: '/dashboard/teams', label: 'Teams', Icon: UsersIcon },
+      { to: '/dashboard/projects', label: 'Projects', Icon: FolderKanbanIcon },
+      { to: '/dashboard/resumes', label: 'Resumes', Icon: FileTextIcon },
+    ],
+  },
+]
+
+// Flat list for route-title matching (includes non-rail pages like Settings).
 export const SHELL_NAV: NavItem[] = [
-  { to: '/dashboard', label: 'Home', exact: true, Icon: LayoutDashboardIcon },
-  { to: '/dashboard/teams', label: 'Teams', Icon: UsersIcon },
-  { to: '/dashboard/projects', label: 'Projects', Icon: FolderKanbanIcon },
-  { to: '/dashboard/resumes', label: 'Resumes', Icon: FileTextIcon },
+  ...SHELL_NAV_GROUPS.flatMap((g) => g.items),
   { to: '/dashboard/settings', label: 'Settings', Icon: SettingsIcon },
 ]
 
@@ -60,7 +75,18 @@ const RAIL_ITEM_ACTIVE =
 const WIDE_ITEM =
   'flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-foreground/[0.03] hover:text-foreground'
 const WIDE_ITEM_ACTIVE =
-  'flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm bg-foreground/[0.06] font-medium text-foreground'
+  'flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm bg-foreground/[0.06] text-foreground'
+
+// The devl workspace-rail group label: mono, tiny, uppercase, wide-tracked.
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mt-5 mb-1 flex items-center justify-between px-2">
+      <span className="font-mono text-[9px] text-muted-foreground/70 uppercase tracking-[0.25em]">
+        {children}
+      </span>
+    </div>
+  )
+}
 
 const RAIL_PREF_KEY = 'folio-rail-expanded'
 
@@ -117,44 +143,54 @@ export function ShellRail({
 
       {expanded ? (
         <nav className="flex-1 overflow-y-auto px-2 py-3">
-          <ul className="flex flex-col gap-0.5">
-            {SHELL_NAV.map((item) => (
-              <li key={item.to}>
-                <Link
-                  to={item.to}
-                  activeOptions={{ exact: item.exact ?? false }}
-                  className={WIDE_ITEM}
-                  activeProps={{ className: WIDE_ITEM_ACTIVE }}
-                >
-                  <item.Icon className="size-4 opacity-70" />
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {SHELL_NAV_GROUPS.map((group, gi) => (
+            <div key={group.label ?? gi}>
+              {group.label && <SectionLabel>{group.label}</SectionLabel>}
+              <ul className="flex flex-col gap-0.5">
+                {group.items.map((item) => (
+                  <li key={item.to}>
+                    <Link
+                      to={item.to}
+                      activeOptions={{ exact: item.exact ?? false }}
+                      className={WIDE_ITEM}
+                      activeProps={{ className: WIDE_ITEM_ACTIVE }}
+                    >
+                      <item.Icon className="size-4 opacity-70" />
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </nav>
       ) : (
         <TooltipProvider delay={200}>
           <nav className="flex flex-1 flex-col items-center gap-1 overflow-y-auto py-3">
-            {SHELL_NAV.map((item) => (
-              <Tooltip key={item.to}>
-                <TooltipTrigger
-                  render={
-                    <Link
-                      to={item.to}
-                      aria-label={item.label}
-                      activeOptions={{ exact: item.exact ?? false }}
-                      className={RAIL_ITEM}
-                      activeProps={{ className: RAIL_ITEM_ACTIVE }}
-                    />
-                  }
-                >
-                  <item.Icon className="size-[1.15rem]" />
-                </TooltipTrigger>
-                <TooltipPopup side="right" sideOffset={8}>
-                  {item.label}
-                </TooltipPopup>
-              </Tooltip>
+            {SHELL_NAV_GROUPS.map((group, gi) => (
+              <div key={group.label ?? gi} className="flex flex-col items-center gap-1">
+                {gi > 0 && <div className="my-1 h-px w-8 bg-border/60" />}
+                {group.items.map((item) => (
+                  <Tooltip key={item.to}>
+                    <TooltipTrigger
+                      render={
+                        <Link
+                          to={item.to}
+                          aria-label={item.label}
+                          activeOptions={{ exact: item.exact ?? false }}
+                          className={RAIL_ITEM}
+                          activeProps={{ className: RAIL_ITEM_ACTIVE }}
+                        />
+                      }
+                    >
+                      <item.Icon className="size-[1.15rem]" />
+                    </TooltipTrigger>
+                    <TooltipPopup side="right" sideOffset={8}>
+                      {item.label}
+                    </TooltipPopup>
+                  </Tooltip>
+                ))}
+              </div>
             ))}
           </nav>
         </TooltipProvider>
@@ -297,25 +333,27 @@ export function ShellSheetNav({ onNavigate }: { onNavigate?: () => void }) {
         <span className="font-heading text-base tracking-tight">folio</span>
       </div>
       <nav className="flex-1 overflow-y-auto px-2 py-3">
-        <ul className="flex flex-col gap-0.5">
-          {SHELL_NAV.map((item) => (
-            <li key={item.to}>
-              <Link
-                to={item.to}
-                onClick={onNavigate}
-                activeOptions={{ exact: item.exact ?? false }}
-                className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
-                activeProps={{
-                  className:
-                    'flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm bg-foreground/[0.06] text-foreground font-medium',
-                }}
-              >
-                <item.Icon className="size-4 opacity-70" />
-                {item.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {SHELL_NAV_GROUPS.map((group, gi) => (
+          <div key={group.label ?? gi}>
+            {group.label && <SectionLabel>{group.label}</SectionLabel>}
+            <ul className="flex flex-col gap-0.5">
+              {group.items.map((item) => (
+                <li key={item.to}>
+                  <Link
+                    to={item.to}
+                    onClick={onNavigate}
+                    activeOptions={{ exact: item.exact ?? false }}
+                    className={WIDE_ITEM}
+                    activeProps={{ className: WIDE_ITEM_ACTIVE }}
+                  >
+                    <item.Icon className="size-4 opacity-70" />
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </nav>
     </div>
   )

@@ -51,7 +51,7 @@ function DashboardShell() {
       <div className="flex min-w-0 flex-1 flex-col">
         <ShellMobileBar user={user} onSignOut={signOut} />
         <main className="min-h-0 flex-1 overflow-y-auto">
-          <div className="w-full px-6 py-8 lg:px-10">
+          <div className="flex min-h-full w-full flex-col px-6 py-8 lg:px-10">
             <Outlet />
           </div>
         </main>

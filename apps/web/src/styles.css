@@ -162,17 +162,19 @@ body {
   --success-foreground: var(--color-emerald-700);
   --warning: var(--color-amber-500);
   --warning-foreground: var(--color-amber-700);
-  --accent: --alpha(var(--color-black) / 4%);
+  --accent: --alpha(var(--primary) / 6%);
   --accent-foreground: var(--color-neutral-800);
   --background: var(--color-white);
-  --border: --alpha(var(--color-black) / 8%);
+  --border: --alpha(var(--color-black) / 12%);
   --card: var(--color-white);
   --card-foreground: var(--color-neutral-800);
   --destructive: var(--color-red-500);
   --foreground: var(--color-neutral-800);
-  --input: --alpha(var(--color-black) / 10%);
+  --input: --alpha(var(--color-black) / 14%);
   --muted: --alpha(var(--color-black) / 4%);
-  --muted-foreground: color-mix(in srgb, var(--color-neutral-500) 90%, var(--color-black));
+  /* ~#525252 on white — 7.5:1 contrast (devl token fix). The old neutral-500
+     mix collapsed below AA whenever components stacked opacity on top. */
+  --muted-foreground: var(--color-neutral-600);
   --popover: var(--color-white);
   --popover-foreground: var(--color-neutral-800);
   --primary: var(--color-neutral-800);
@@ -190,10 +192,10 @@ body {
   --code-highlight: --alpha(var(--color-black) / 4%);
   --radius: 0.625rem;
   --sidebar: var(--color-neutral-50);
-  --sidebar-accent: --alpha(var(--color-black) / 4%);
+  --sidebar-accent: --alpha(var(--sidebar-primary) / 6%);
   --sidebar-accent-foreground: var(--color-neutral-800);
-  --sidebar-border: --alpha(var(--color-black) / 6%);
-  --sidebar-foreground: color-mix(in srgb, var(--color-neutral-800) 64%, var(--sidebar));
+  --sidebar-border: --alpha(var(--color-black) / 10%);
+  --sidebar-foreground: color-mix(in srgb, var(--color-neutral-800) 88%, var(--sidebar));
   --sidebar-primary: var(--color-neutral-800);
   --sidebar-primary-foreground: var(--color-neutral-50);
   --sidebar-ring: var(--color-neutral-400);
@@ -207,17 +209,19 @@ body {
   --success-foreground: var(--color-emerald-400);
   --warning: var(--color-amber-500);
   --warning-foreground: var(--color-amber-400);
-  --accent: --alpha(var(--color-white) / 4%);
+  --accent: --alpha(var(--primary) / 10%);
   --accent-foreground: var(--color-neutral-100);
   --background: color-mix(in srgb, var(--color-neutral-950) 95%, var(--color-white));
-  --border: --alpha(var(--color-white) / 6%);
+  --border: --alpha(var(--color-white) / 10%);
   --card: color-mix(in srgb, var(--background) 98%, var(--color-white));
   --card-foreground: var(--color-neutral-100);
   --destructive: color-mix(in srgb, var(--color-red-500) 90%, var(--color-white));
   --foreground: var(--color-neutral-100);
-  --input: --alpha(var(--color-white) / 8%);
+  --input: --alpha(var(--color-white) / 12%);
   --muted: --alpha(var(--color-white) / 4%);
-  --muted-foreground: color-mix(in srgb, var(--color-neutral-500) 90%, var(--color-white));
+  /* ~#a3a3a3 on #1a1a1a — 8.5:1 contrast (devl token fix); the old mix sat
+     near #818181 and went unreadable under opacity modifiers. */
+  --muted-foreground: var(--color-neutral-400);
   --popover: color-mix(in srgb, var(--background) 98%, var(--color-white));
   --popover-foreground: var(--color-neutral-100);
   --primary: var(--color-neutral-100);
@@ -234,10 +238,10 @@ body {
   --code-foreground: var(--foreground);
   --code-highlight: --alpha(var(--color-white) / 4%);
   --sidebar: color-mix(in srgb, var(--color-neutral-950) 97%, var(--color-white));
-  --sidebar-accent: --alpha(var(--color-white) / 4%);
+  --sidebar-accent: --alpha(var(--sidebar-primary) / 10%);
   --sidebar-accent-foreground: var(--color-neutral-100);
-  --sidebar-border: --alpha(var(--color-white) / 5%);
-  --sidebar-foreground: color-mix(in srgb, var(--color-neutral-100) 64%, var(--sidebar));
+  --sidebar-border: --alpha(var(--color-white) / 9%);
+  --sidebar-foreground: color-mix(in srgb, var(--color-neutral-100) 88%, var(--sidebar));
   --sidebar-primary: var(--color-neutral-100);
   --sidebar-primary-foreground: var(--color-neutral-800);
   --sidebar-ring: var(--color-neutral-400);

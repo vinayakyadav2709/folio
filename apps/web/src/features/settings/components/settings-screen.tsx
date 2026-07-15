@@ -30,11 +30,11 @@ export function SettingsScreen() {
   const form = useProfileForm(profile)
 
   return (
-    <div className="flex w-full flex-col gap-8">
+    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8">
       <PageHeader
         title="Settings"
       />
-      <div className="grid gap-10 md:grid-cols-[200px_minmax(0,1fr)]">
+      <div className="grid flex-1 content-start gap-10 md:grid-cols-[200px_minmax(0,1fr)] md:content-stretch">
       <aside className="md:sticky md:top-0 md:self-start md:py-1">
         <ul className="flex gap-0.5 overflow-x-auto md:flex-col">
           {NAV.map(({ id, label, icon: Icon }) => (
@@ -56,7 +56,7 @@ export function SettingsScreen() {
         </ul>
       </aside>
 
-      <div className="min-w-0">
+      <div className="flex min-w-0 flex-col">
         {active === 'ai' ? (
           <AiKeysCard />
         ) : profile === undefined ? (

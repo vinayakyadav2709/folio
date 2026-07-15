@@ -1,38 +1,59 @@
+import { UsersIcon } from 'lucide-react'
+import {
+  Select,
+  SelectItem,
+  SelectPopup,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 
 export type TeamOption = { _id: string; name: string }
 
+export const ALL_TEAMS = 'all'
+
+/**
+ * Compact team selector — the devl filter-toolbar scoped-select pattern.
+ * `allOption` adds an "All teams" entry for filtering contexts (the projects
+ * list); leave it off where a single concrete team is required (new project).
+ */
 export function TeamPicker({
   teams,
   selectedId,
   onSelect,
+  allOption = false,
+  className,
 }: {
   teams: TeamOption[]
   selectedId: string | null
   onSelect: (id: string) => void
+  allOption?: boolean
+  className?: string
 }) {
   if (teams.length === 0) return null
+  const items = [
+    ...(allOption ? [{ value: ALL_TEAMS, label: 'All teams' }] : []),
+    ...teams.map((t) => ({ value: t._id, label: t.name })),
+  ]
   return (
-    <div className="inline-flex flex-wrap items-center gap-1 rounded-xl border bg-card p-1 shadow-xs/5">
-      {teams.map((team) => {
-        const active = team._id === selectedId
-        return (
-          <button
-            key={team._id}
-            type="button"
-            onClick={() => onSelect(team._id)}
-            aria-pressed={active}
-            className={cn(
-              'relative rounded-lg px-3 py-1.5 font-medium text-sm outline-none transition-[color,background-color,box-shadow,scale] duration-150 focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.96]',
-              active
-                ? 'bg-foreground text-background shadow-sm'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-            )}
-          >
-            {team.name}
-          </button>
-        )
-      })}
-    </div>
+    <Select
+      items={items}
+      value={selectedId ?? undefined}
+      onValueChange={(v) => {
+        if (v) onSelect(v)
+      }}
+    >
+      <SelectTrigger className={cn('w-56 max-w-full', className)} size="sm">
+        <UsersIcon className="text-muted-foreground" />
+        <SelectValue />
+      </SelectTrigger>
+      <SelectPopup>
+        {items.map((i) => (
+          <SelectItem key={i.value} value={i.value}>
+            {i.label}
+          </SelectItem>
+        ))}
+      </SelectPopup>
+    </Select>
   )
 }

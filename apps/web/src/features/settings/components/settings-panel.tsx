@@ -14,7 +14,7 @@ import { type SaveSection, useSectionSave } from '../lib/use-profile-form'
 // plus one save affordance, SaveBar, shared by every section that persists.
 
 export function Panel({ children }: { children: ReactNode }) {
-  return <div className="flex min-w-0 flex-col">{children}</div>
+  return <div className="flex min-w-0 flex-1 flex-col gap-10">{children}</div>
 }
 
 export function PanelSection({
@@ -27,7 +27,7 @@ export function PanelSection({
   children: ReactNode
 }) {
   return (
-    <section className="grid gap-x-10 gap-y-5 sm:grid-cols-[180px_minmax(0,1fr)]">
+    <section className="grid gap-x-10 gap-y-5 lg:grid-cols-[180px_minmax(0,1fr)]">
       <div>
         <h2 className="text-balance font-medium text-sm">{title}</h2>
         {hint ? (
@@ -63,15 +63,16 @@ export function PanelField({
   )
 }
 
-// One dirty-state save bar for every section. Sticks to the bottom of the
-// content column while the panel scrolls, enabling only when the section is
-// dirty — the same position and grammar in each panel.
+// One dirty-state save bar for every section. Pinned to the bottom of the
+// content column (mt-auto pushes it down when the section is short; sticky
+// keeps it in view while a long panel scrolls), enabling only when the
+// section is dirty — the same position and grammar in each panel.
 export function SaveBar({ section }: { section: SaveSection }) {
   const { saving, saved, error, run } = useSectionSave()
   const { dirty, save, discard } = section
 
   return (
-    <div className="sticky bottom-0 z-10 mt-10 flex items-center justify-between gap-4 border-border/60 border-t bg-background/85 py-3 backdrop-blur">
+    <div className="sticky bottom-0 z-10 mt-auto flex items-center justify-between gap-4 border-border/60 border-t bg-background/85 py-3 backdrop-blur">
       <div className="min-w-0 font-mono text-[10px] uppercase tracking-[0.3em]">
         {error ? (
           <span className="text-destructive-foreground normal-case tracking-normal">{error}</span>

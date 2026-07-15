@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useAction, useMutation, useQuery } from 'convex/react'
 import { FileText, Sparkles } from 'lucide-react'
@@ -19,7 +19,8 @@ import { TeamPicker } from './TeamPicker'
 
 export function NewProjectScreen() {
   const teams = useQuery(api.teams.listMyTeams)
-  const [remembered, select] = useSelectedTeam()
+  const [remembered] = useSelectedTeam()
+  const [picked, setPicked] = useState<string | null>(null)
   const createProject = useMutation(api.projects.createProject)
   const generateDescription = useAction(api.ai.generateDescription)
   const navigate = useNavigate()
@@ -35,14 +36,15 @@ export function NewProjectScreen() {
   const [aiNoKey, setAiNoKey] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Destination team: explicit pick > remembered filter (if it's a real team,
+  // not 'all') > first team. Local only — picking here never rewrites the
+  // remembered projects-list filter.
   const teamId =
     teams && teams.length > 0
-      ? (teams.find((t) => t._id === remembered)?._id ?? teams[0]._id)
+      ? (teams.find((t) => t._id === picked)?._id ??
+        teams.find((t) => t._id === remembered)?._id ??
+        teams[0]._id)
       : null
-
-  useEffect(() => {
-    if (teamId && teamId !== remembered) select(teamId)
-  }, [teamId, remembered, select])
 
   async function onGenerate() {
     setAiLoading(true)
@@ -140,7 +142,7 @@ export function NewProjectScreen() {
           <CardPanel className="flex flex-col gap-5">
             <div className="flex flex-col gap-2">
               <Label>Team</Label>
-              <TeamPicker teams={teams} selectedId={teamId} onSelect={select} />
+              <TeamPicker teams={teams} selectedId={teamId} onSelect={setPicked} />
             </div>
 
             <div className="flex flex-col gap-2">

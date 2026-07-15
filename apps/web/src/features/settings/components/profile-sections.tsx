@@ -218,16 +218,16 @@ export function SkillsSection({ form }: { form: ProfileForm }) {
               No skill categories yet.
             </p>
           )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="self-start"
+            onClick={() => setSkills((rows) => [...rows, { category: '', itemsText: '' }])}
+          >
+            <PlusIcon /> Add category
+          </Button>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="self-start"
-          onClick={() => setSkills((rows) => [...rows, { category: '', itemsText: '' }])}
-        >
-          <PlusIcon /> Add category
-        </Button>
       </PanelSection>
       <SaveBar section={form.sections.skills} />
     </Panel>
@@ -289,20 +289,20 @@ export function EducationSection({ form }: { form: ProfileForm }) {
             </div>
           ))}
           {fields.education.length === 0 && (
-            <p className="rounded-2xl border border-border/60 border-dashed px-3 py-6 text-center text-muted-foreground text-xs">
+            <p className="rounded-lg border border-border/60 border-dashed px-3 py-6 text-center text-muted-foreground text-xs">
               No education entries yet.
             </p>
           )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="self-start"
+            onClick={() => setEducation((rows) => [...rows, { ...EMPTY_EDU }])}
+          >
+            <GraduationCapIcon /> Add education
+          </Button>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="self-start"
-          onClick={() => setEducation((rows) => [...rows, { ...EMPTY_EDU }])}
-        >
-          <GraduationCapIcon /> Add education
-        </Button>
       </PanelSection>
       <SaveBar section={form.sections.education} />
     </Panel>

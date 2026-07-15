@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { FolderPlus, Plus, Users } from 'lucide-react'
@@ -11,7 +10,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { PageHeader } from '@/components/shared/page-header'
 import { useSelectedTeam } from '../lib/useSelectedTeam'
 import { AvatarStack, hueFrom, initials } from './avatars'
-import { TeamPicker } from './TeamPicker'
+import { ALL_TEAMS, TeamPicker } from './TeamPicker'
 
 function firstLine(text: string): string {
   return text
@@ -25,15 +24,14 @@ export function ProjectsListScreen() {
   const [selectedId, select] = useSelectedTeam()
 
   // Fall back to the first team when nothing is remembered (or the remembered
-  // team is gone).
+  // team is gone). 'all' is a valid remembered value here. Render-time only —
+  // the fallback is never written back (select() persists on user action).
   const activeId =
     teams && teams.length > 0
-      ? (teams.find((t) => t._id === selectedId)?._id ?? teams[0]._id)
+      ? selectedId === ALL_TEAMS
+        ? ALL_TEAMS
+        : (teams.find((t) => t._id === selectedId)?._id ?? teams[0]._id)
       : null
-
-  useEffect(() => {
-    if (activeId && activeId !== selectedId) select(activeId)
-  }, [activeId, selectedId, select])
 
   return (
     <div className="flex flex-col gap-6">
@@ -64,15 +62,28 @@ export function ProjectsListScreen() {
         </Empty>
       ) : (
         <>
-          <TeamPicker teams={teams} selectedId={activeId} onSelect={select} />
-          {activeId && <ProjectGrid teamId={activeId as Id<'teams'>} />}
+          <TeamPicker teams={teams} selectedId={activeId} onSelect={select} allOption className="self-start" />
+          {activeId === ALL_TEAMS ? (
+            teams.map((t) => (
+              <section key={t._id} className="flex flex-col gap-3">
+                <h2 className="font-mono text-[10px] text-muted-foreground/70 uppercase tracking-[0.25em]">
+                  {t.name}
+                </h2>
+                <ProjectGrid teamId={t._id} compact />
+              </section>
+            ))
+          ) : (
+            activeId && <ProjectGrid teamId={activeId as Id<'teams'>} />
+          )}
         </>
       )}
     </div>
   )
 }
 
-function ProjectGrid({ teamId }: { teamId: Id<'teams'> }) {
+// `compact` is the all-teams view: smaller loading footprint and a one-line
+// empty note instead of the full empty card repeated per team.
+function ProjectGrid({ teamId, compact = false }: { teamId: Id<'teams'>; compact?: boolean }) {
   const projects = useQuery(api.projects.listTeamProjects, { teamId })
   const team = useQuery(api.teams.getTeam, { teamId })
 
@@ -83,12 +94,15 @@ function ProjectGrid({ teamId }: { teamId: Id<'teams'> }) {
 
   if (projects === undefined)
     return (
-      <div className="grid place-items-center py-20">
+      <div className={`grid place-items-center ${compact ? 'py-6' : 'py-20'}`}>
         <Spinner />
       </div>
     )
 
   if (projects.length === 0) {
+    if (compact) {
+      return <p className="text-muted-foreground text-sm">No projects in this team yet.</p>
+    }
     return (
       <Empty className="rounded-2xl border border-dashed">
         <EmptyHeader>
