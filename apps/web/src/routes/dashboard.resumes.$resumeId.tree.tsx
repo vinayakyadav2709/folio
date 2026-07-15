@@ -1,16 +1,13 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { VersionTree } from '#/features/version-tree'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
+// The version tree now lives on the editor page as the "History" view. Keep this
+// path as a thin redirect so old links don't 404.
 export const Route = createFileRoute('/dashboard/resumes/$resumeId/tree')({
-  component: TreePage,
+  beforeLoad: ({ params }) => {
+    throw redirect({
+      to: '/dashboard/resumes/$resumeId',
+      params: { resumeId: params.resumeId },
+      search: { view: 'history' },
+    })
+  },
 })
-
-function TreePage() {
-  const { resumeId } = Route.useParams()
-  // Break out of the dashboard shell's max-w container for a full-bleed canvas.
-  return (
-    <div className="-mx-6 -my-8 h-[calc(100vh-3.25rem)]">
-      <VersionTree resumeId={resumeId} />
-    </div>
-  )
-}

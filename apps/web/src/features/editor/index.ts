@@ -1,2 +1,2 @@
 export { ResumesList } from './components/resumes-list'
-export { ResumeEditor } from './components/resume-editor'
+export { ResumeEditor, type EditorView } from './components/resume-editor'

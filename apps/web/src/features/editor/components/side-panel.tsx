@@ -1,4 +1,6 @@
-import { PlusIcon, XIcon } from 'lucide-react'
+import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
+import { PencilIcon, PlusIcon, XIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
@@ -23,12 +25,53 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function SidePanel({ blocks, header, onHeader, theme, onTheme }: Props) {
+// The header auto-fills from the user's profile on load (see EditorInner). Here
+// it reads as a compact, read-only summary — Settings stays the source of truth
+// — with an Override affordance for per-resume tweaks persisted in the snapshot.
+function HeaderSection({ header, onHeader }: { header: Header; onHeader: (h: Header) => void }) {
+  const [editing, setEditing] = useState(false)
   const set = (patch: Partial<Header>) => onHeader({ ...header, ...patch })
 
+  if (!editing) {
+    const contact = [header.email, header.phone, header.location].filter(Boolean).join('  ·  ')
+    return (
+      <div className="flex flex-col gap-1.5 rounded-lg border border-border/60 bg-card p-3 shadow-xs">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="truncate font-medium text-sm text-pretty">{header.fullName || 'Your name'}</p>
+            {header.headline && (
+              <p className="truncate text-muted-foreground text-xs">{header.headline}</p>
+            )}
+          </div>
+          <Button
+            size="xs"
+            variant="ghost"
+            className="-mt-1 -me-1 shrink-0 text-muted-foreground"
+            onClick={() => setEditing(true)}
+          >
+            <PencilIcon />
+            Override
+          </Button>
+        </div>
+        {contact && <p className="truncate text-muted-foreground text-xs">{contact}</p>}
+        {header.links.length > 0 && (
+          <p className="truncate text-muted-foreground text-xs">
+            {header.links.map((l) => l.label || l.url).join('  ·  ')}
+          </p>
+        )}
+        <p className="mt-0.5 text-[10px] text-muted-foreground/70 text-pretty">
+          From your{' '}
+          <Link to="/dashboard/settings" className="underline underline-offset-2">
+            profile
+          </Link>{' '}
+          — override to tweak just this resume.
+        </p>
+      </div>
+    )
+  }
+
   return (
-    <aside className="flex flex-col gap-3">
-      <SectionLabel>Header</SectionLabel>
+    <div className="flex flex-col gap-2 rounded-lg border border-border/60 bg-card p-3 shadow-xs">
       <Input value={header.fullName} placeholder="Full name" onChange={(e) => set({ fullName: e.target.value })} />
       <Input value={header.headline ?? ''} placeholder="Headline" onChange={(e) => set({ headline: e.target.value })} />
       <div className="grid grid-cols-2 gap-2">
@@ -66,15 +109,29 @@ export function SidePanel({ blocks, header, onHeader, theme, onTheme }: Props) {
             </Button>
           </div>
         ))}
-        <Button
-          size="xs"
-          variant="ghost"
-          className="self-start text-muted-foreground"
-          onClick={() => set({ links: [...header.links, { label: '', url: '' }] })}
-        >
-          <PlusIcon /> link
-        </Button>
+        <div className="flex items-center justify-between">
+          <Button
+            size="xs"
+            variant="ghost"
+            className="text-muted-foreground"
+            onClick={() => set({ links: [...header.links, { label: '', url: '' }] })}
+          >
+            <PlusIcon /> link
+          </Button>
+          <Button size="xs" variant="ghost" onClick={() => setEditing(false)}>
+            Done
+          </Button>
+        </div>
       </div>
+    </div>
+  )
+}
+
+export function SidePanel({ blocks, header, onHeader, theme, onTheme }: Props) {
+  return (
+    <aside className="flex flex-col gap-3">
+      <SectionLabel>Header</SectionLabel>
+      <HeaderSection header={header} onHeader={onHeader} />
 
       <Separator className="my-1" />
       <SectionLabel>Theme</SectionLabel>

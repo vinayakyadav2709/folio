@@ -3,21 +3,18 @@ import { Link } from '@tanstack/react-router'
 import { useConvex, useQuery } from 'convex/react'
 import { api } from '@folio/backend/api'
 import type { Id } from '@folio/backend/dataModel'
-import { GraduationCapIcon, PlusIcon, UserRoundIcon, WandSparklesIcon } from 'lucide-react'
+import { GraduationCapIcon, PlusIcon, WandSparklesIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   BLANK_TYPES,
-  headerFromProfile,
-  isHeaderEmpty,
   newBlock,
   newEducationBlock,
   newProjectBlock,
   newSkillsBlock,
   type Block,
-  type Header,
 } from '../lib/blocks'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -28,15 +25,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function BlockLibrary({
-  onAdd,
-  header,
-  onHeader,
-}: {
-  onAdd: (block: Block) => void
-  header: Header
-  onHeader: (header: Header) => void
-}) {
+export function BlockLibrary({ onAdd }: { onAdd: (block: Block) => void }) {
   const convex = useConvex()
   const teams = useQuery(api.teams.listMyTeams)
   const me = useQuery(api.auth.getAuthUser)
@@ -73,6 +62,7 @@ export function BlockLibrary({
           <Select
             value={teamId}
             onValueChange={(value) => setPickedTeam(value as Id<'teams'>)}
+            items={Object.fromEntries(teams.map((t) => [t._id, t.name]))}
           >
             <SelectTrigger size="sm">
               <SelectValue placeholder="Pick a team" />
@@ -139,16 +129,6 @@ export function BlockLibrary({
         </p>
       ) : (
         <div className="flex flex-col gap-1.5">
-          {isHeaderEmpty(header) && (
-            <button
-              type="button"
-              onClick={() => onHeader(headerFromProfile(profile))}
-              className="flex items-center gap-2 rounded-lg border border-border/70 border-dashed px-2.5 py-1.5 text-left text-muted-foreground text-sm transition-colors hover:border-border hover:bg-foreground/[0.04] hover:text-foreground"
-            >
-              <UserRoundIcon className="size-3.5 shrink-0" />
-              Prefill header
-            </button>
-          )}
           {profile.education.map((entry, i) => (
             <button
               key={i}
@@ -172,7 +152,7 @@ export function BlockLibrary({
               Skills
             </button>
           )}
-          {profile.education.length === 0 && profile.skills.length === 0 && !isHeaderEmpty(header) && (
+          {profile.education.length === 0 && profile.skills.length === 0 && (
             <p className="text-muted-foreground text-sm text-pretty">
               Add education and skills in{' '}
               <Link to="/dashboard/settings" className="underline underline-offset-2">
