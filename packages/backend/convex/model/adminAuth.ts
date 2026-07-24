@@ -1,4 +1,5 @@
 import { Effect } from 'effect'
+import { components } from '../_generated/api'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import { authComponent, createAuth } from '../auth'
 import { Forbidden, Invalid, NotFound } from '../lib/errors'
@@ -30,6 +31,29 @@ const requireSiteAdmin = (ctx: Ctx) =>
       ok ? Effect.void : Effect.fail(new Forbidden({ message: 'Admin only' })),
     ),
   )
+
+// Every registered user, for the admin page. Reads the Better Auth component's
+// `user` table directly through its internal `adapter.findMany` query — this is
+// the same read path `authComponent.getAnyUserById` uses (adapter.findOne), so
+// it works from a read-only QueryCtx (no runMutation). Capped at one page of 200
+// users; if the deployment ever exceeds that this needs cursor pagination.
+export const listUsers = Effect.fn('adminAuth.listUsers')(function* (ctx: Ctx) {
+  yield* requireSiteAdmin(ctx)
+
+  const result = yield* Effect.promise(() =>
+    ctx.runQuery(components.betterAuth.adapter.findMany, {
+      model: 'user',
+      paginationOpts: { cursor: null, numItems: 200 },
+    }),
+  )
+
+  const page = result.page as Array<{
+    _id: string
+    email: string
+    name: string | null
+  }>
+  return page.map((u) => ({ id: u._id, email: u.email, name: u.name ?? null }))
+})
 
 // Core credential reset — hashes with Better Auth's own scrypt so the stored
 // "<salt>:<key>" format is always valid, then updates only the

@@ -11,6 +11,19 @@ export const amISiteAdmin = query({
   handler: (ctx) => run(AdminAuth.amISiteAdmin(ctx)),
 })
 
+// Every registered user, for the admin page. Gated: caller must be site admin.
+export const listUsers = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      id: v.string(),
+      email: v.string(),
+      name: v.union(v.string(), v.null()),
+    }),
+  ),
+  handler: (ctx) => run(AdminAuth.listUsers(ctx)),
+})
+
 // Reset any user's password. Gated: the caller must be the site admin.
 // Not a shared secret — it requires an authenticated admin session.
 export const resetUserPassword = mutation({
