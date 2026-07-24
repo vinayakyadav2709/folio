@@ -10,6 +10,7 @@ import {
   PanelLeftCloseIcon,
   PanelLeftIcon,
   SettingsIcon,
+  ShieldIcon,
   UsersIcon,
 } from 'lucide-react'
 import type { ComponentType } from 'react'
@@ -243,6 +244,7 @@ export function ProfileMenu({
   expanded?: boolean
 }) {
   const profile = useQuery(api.profiles.getMyProfile)
+  const isAdmin = useQuery(api.adminAuth.amISiteAdmin)
   const email = user?.email ?? ''
   const label = user?.name || email || 'Account'
   const initial = (user?.name || email || '?').charAt(0).toUpperCase()
@@ -309,6 +311,12 @@ export function ProfileMenu({
           <SettingsIcon />
           Settings
         </MenuItem>
+        {isAdmin === true ? (
+          <MenuItem render={<Link to="/dashboard/admin" />}>
+            <ShieldIcon />
+            Admin
+          </MenuItem>
+        ) : null}
         <MenuSeparator />
         <MenuItem variant="destructive" onClick={onSignOut}>
           <LogOutIcon />

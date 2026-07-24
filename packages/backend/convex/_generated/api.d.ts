@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as adminAuth from "../adminAuth.js";
 import type * as ai from "../ai.js";
 import type * as ai_prompts_generateDescription from "../ai/prompts/generateDescription.js";
 import type * as ai_prompts_rewriteBullet from "../ai/prompts/rewriteBullet.js";
@@ -23,6 +24,7 @@ import type * as lib_crypto from "../lib/crypto.js";
 import type * as lib_errors from "../lib/errors.js";
 import type * as lib_slug from "../lib/slug.js";
 import type * as migrations from "../migrations.js";
+import type * as model_adminAuth from "../model/adminAuth.js";
 import type * as model_aiKeys from "../model/aiKeys.js";
 import type * as model_migrations from "../model/migrations.js";
 import type * as model_portfolio from "../model/portfolio.js";
@@ -44,6 +46,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  adminAuth: typeof adminAuth;
   ai: typeof ai;
   "ai/prompts/generateDescription": typeof ai_prompts_generateDescription;
   "ai/prompts/rewriteBullet": typeof ai_prompts_rewriteBullet;
@@ -59,6 +62,7 @@ declare const fullApi: ApiFromModules<{
   "lib/errors": typeof lib_errors;
   "lib/slug": typeof lib_slug;
   migrations: typeof migrations;
+  "model/adminAuth": typeof model_adminAuth;
   "model/aiKeys": typeof model_aiKeys;
   "model/migrations": typeof model_migrations;
   "model/portfolio": typeof model_portfolio;
