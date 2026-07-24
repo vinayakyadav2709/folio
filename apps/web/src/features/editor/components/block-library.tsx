@@ -3,18 +3,20 @@ import { Link } from '@tanstack/react-router'
 import { useConvex, useQuery } from 'convex/react'
 import { api } from '@folio/backend/api'
 import type { Id } from '@folio/backend/dataModel'
-import { GraduationCapIcon, PlusIcon, WandSparklesIcon } from 'lucide-react'
+import { ContactIcon, GraduationCapIcon, ImportIcon, PlusIcon, WandSparklesIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   BLANK_TYPES,
+  headerFromProfile,
   newBlock,
   newEducationBlock,
   newProjectBlock,
   newSkillsBlock,
   type Block,
+  type Header,
 } from '../lib/blocks'
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -25,7 +27,17 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function BlockLibrary({ onAdd }: { onAdd: (block: Block) => void }) {
+// Shared style for the dashed "pull this in" rows.
+const PULL_ITEM =
+  'flex items-center gap-2 rounded-lg border border-border/70 border-dashed px-2.5 py-1.5 text-left text-muted-foreground text-sm transition-colors hover:border-border hover:bg-foreground/[0.04] hover:text-foreground'
+
+export function BlockLibrary({
+  onAdd,
+  onApplyHeader,
+}: {
+  onAdd: (block: Block) => void
+  onApplyHeader: (header: Header) => void
+}) {
   const convex = useConvex()
   const teams = useQuery(api.teams.listMyTeams)
   const me = useQuery(api.auth.getAuthUser)
@@ -129,12 +141,33 @@ export function BlockLibrary({ onAdd }: { onAdd: (block: Block) => void }) {
         </p>
       ) : (
         <div className="flex flex-col gap-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              onApplyHeader(headerFromProfile(profile))
+              for (const entry of profile.education) onAdd(newEducationBlock(entry))
+              if (profile.skills.length > 0) onAdd(newSkillsBlock(profile.skills))
+            }}
+            className={PULL_ITEM}
+          >
+            <ImportIcon className="size-3.5 shrink-0" />
+            Add everything
+          </button>
+          <button
+            type="button"
+            onClick={() => onApplyHeader(headerFromProfile(profile))}
+            className={PULL_ITEM}
+            title="Fill the resume header (name, email, phone, links) from your profile"
+          >
+            <ContactIcon className="size-3.5 shrink-0" />
+            Contact info
+          </button>
           {profile.education.map((entry, i) => (
             <button
               key={i}
               type="button"
               onClick={() => onAdd(newEducationBlock(entry))}
-              className="flex items-center gap-2 rounded-lg border border-border/70 border-dashed px-2.5 py-1.5 text-left text-muted-foreground text-sm transition-colors hover:border-border hover:bg-foreground/[0.04] hover:text-foreground"
+              className={PULL_ITEM}
             >
               <GraduationCapIcon className="size-3.5 shrink-0" />
               <span className="truncate" title={entry.school}>
@@ -146,7 +179,7 @@ export function BlockLibrary({ onAdd }: { onAdd: (block: Block) => void }) {
             <button
               type="button"
               onClick={() => onAdd(newSkillsBlock(profile.skills))}
-              className="flex items-center gap-2 rounded-lg border border-border/70 border-dashed px-2.5 py-1.5 text-left text-muted-foreground text-sm transition-colors hover:border-border hover:bg-foreground/[0.04] hover:text-foreground"
+              className={PULL_ITEM}
             >
               <WandSparklesIcon className="size-3.5 shrink-0" />
               Skills

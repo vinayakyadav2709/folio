@@ -271,7 +271,10 @@ function EditorInner({
       {error && <p className="-mt-4 text-destructive text-sm text-pretty">{error}</p>}
 
       <div className={editGrid(panelWide)}>
-        <BlockLibrary onAdd={(block) => setBlocks((prev) => [...prev, block])} />
+        <BlockLibrary
+          onAdd={(block) => setBlocks((prev) => [...prev, block])}
+          onApplyHeader={setHeader}
+        />
         <Canvas blocks={blocks} onChange={setBlocks} />
         <SidePanel
           blocks={blocks}
