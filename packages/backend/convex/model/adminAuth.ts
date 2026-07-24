@@ -48,8 +48,10 @@ export const resetPassword = Effect.fn('adminAuth.resetPassword')(function* (
     )
   }
 
+  // includeAccounts is required for found.accounts to be populated — without
+  // it the credential check below always sees an empty list and false-negatives.
   const found = yield* Effect.promise(() =>
-    authCtx.internalAdapter.findUserByEmail(email),
+    authCtx.internalAdapter.findUserByEmail(email, { includeAccounts: true }),
   )
   if (!found?.user) {
     return yield* Effect.fail(new NotFound({ message: `No user with email ${email}` }))
