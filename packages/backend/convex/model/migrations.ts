@@ -38,3 +38,14 @@ export const backfillSlugs = Effect.fn('migrations.backfillSlugs')(function* (ct
 
   return { projects: patchedProjects, resumes: patchedResumes }
 })
+
+// One-off backfill: `published` was added after these rows existed, and every
+// project with a slug was already public. Keep them public. Safe to re-run.
+export const backfillPublished = Effect.fn('migrations.backfillPublished')(function* (
+  ctx: MutationCtx,
+) {
+  const projects = yield* Effect.promise(() => ctx.db.query('projects').collect())
+  const stale = projects.filter((p) => !!p.slug && p.published === undefined)
+  yield* Effect.forEach(stale, (p) => Effect.promise(() => ctx.db.patch(p._id, { published: true })))
+  return { projects: stale.length }
+})

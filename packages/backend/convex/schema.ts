@@ -67,8 +67,14 @@ export default defineSchema({
     description: v.string(),
     demoUrl: v.optional(v.string()), // the main live/demo link
     githubUrl: v.optional(v.string()),
+    // free-text like education dates ("Jan 2024", "2023"); blocks derive dateRange
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
     links: v.array(v.object({ label: v.string(), url: v.string() })), // legacy, superseded by demoUrl/githubUrl
     screenshotIds: v.array(v.id('_storage')),
+    // unset/false = resume-only (private); true = listed on the public team page
+    // and served at /p/$teamSlug/$projectSlug.
+    published: v.optional(v.boolean()),
     updatedAt: v.number(),
   })
     .index('by_team', ['teamId'])
@@ -109,6 +115,31 @@ export default defineSchema({
         endDate: v.optional(v.string()),
         gpa: v.optional(v.string()),
       }),
+    ),
+    // optional: rows predate the field. Experience blocks pull from here.
+    experience: v.optional(
+      v.array(
+        v.object({
+          company: v.string(),
+          role: v.optional(v.string()),
+          location: v.optional(v.string()),
+          startDate: v.optional(v.string()),
+          endDate: v.optional(v.string()),
+          bullets: v.array(v.string()),
+        }),
+      ),
+    ),
+    // optional: rows predate the field. Awards, certifications, publications.
+    // `mediaIds` are certificates/photos/screenshots — optional so pre-media rows stay valid.
+    achievements: v.optional(
+      v.array(
+        v.object({
+          title: v.string(),
+          description: v.optional(v.string()),
+          date: v.optional(v.string()),
+          mediaIds: v.optional(v.array(v.id('_storage'))),
+        }),
+      ),
     ),
   })
     .index('by_user', ['userId'])
@@ -159,10 +190,24 @@ export default defineSchema({
     .index('by_branch', ['branchId'])
     .index('by_parent', ['parentId']),
 
+  // Shared job-posting pool: visible to every signed-in user across the app.
+  // `description` is the full JD text (pasted or AI-extracted from a screenshot).
+  jobs: defineTable({
+    createdBy: v.string(), // Better Auth user id
+    company: v.string(),
+    role: v.string(),
+    location: v.optional(v.string()),
+    url: v.optional(v.string()),
+    salary: v.optional(v.string()),
+    description: v.string(),
+  }),
+
   // BYOK: encrypted at rest, decrypted only inside actions, never logged.
   aiKeys: defineTable({
     userId: v.string(),
     provider: v.union(v.literal('anthropic'), v.literal('openai'), v.literal('google')),
     encryptedKey: v.string(),
+    // Unset = use the provider's default model (see ai/provider.ts).
+    model: v.optional(v.string()),
   }).index('by_user', ['userId']),
 })

@@ -15,6 +15,32 @@ const vEducation = v.array(
   }),
 )
 
+const vExperience = v.array(
+  v.object({
+    company: v.string(),
+    role: v.optional(v.string()),
+    location: v.optional(v.string()),
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    bullets: v.array(v.string()),
+  }),
+)
+
+const vAchievements = v.array(
+  v.object({
+    title: v.string(),
+    description: v.optional(v.string()),
+    date: v.optional(v.string()),
+    mediaIds: v.optional(v.array(v.id('_storage'))),
+  }),
+)
+
+// Resolved achievement media, keyed by storage id (see model/profiles.ts).
+const vMedia = v.record(
+  v.id('_storage'),
+  v.object({ url: v.string(), contentType: v.optional(v.string()), size: v.number() }),
+)
+
 const vProfileDoc = v.object({
   _id: v.id('profiles'),
   _creationTime: v.number(),
@@ -30,6 +56,9 @@ const vProfileDoc = v.object({
   websiteUrl: v.optional(v.string()),
   skills: vSkills,
   education: vEducation,
+  experience: v.optional(vExperience),
+  achievements: v.optional(vAchievements),
+  media: vMedia,
 })
 
 const nullableString = v.union(v.string(), v.null())
@@ -52,9 +81,17 @@ export const updateMyProfile = mutation({
     websiteUrl: v.optional(v.string()),
     skills: v.optional(vSkills),
     education: v.optional(vEducation),
+    experience: v.optional(vExperience),
+    achievements: v.optional(vAchievements),
   },
   returns: v.null(),
   handler: (ctx, patch) => run(Profiles.updateMyProfile(ctx, patch)),
+})
+
+export const generateUploadUrl = mutation({
+  args: {},
+  returns: v.string(),
+  handler: (ctx) => run(Profiles.generateUploadUrl(ctx)),
 })
 
 export const setUsername = mutation({

@@ -53,11 +53,33 @@ const userResumeSlug = (ctx: MutationCtx, userId: string, name: string) =>
     ).pipe(Effect.map(Boolean)),
   )
 
+// Mirrors headerFromProfile in apps/web/src/features/editor/lib/blocks.ts —
+// the initial header is derived server-side so the client never supplies it.
+const headerFromProfile = (profile: Doc<'profiles'> | null): Header => ({
+  fullName: profile?.fullName ?? '',
+  headline: profile?.headline || undefined,
+  email: profile?.email || undefined,
+  phone: profile?.phone || undefined,
+  location: profile?.location || undefined,
+  links: [
+    profile?.githubUrl && { label: 'GitHub', url: profile.githubUrl },
+    profile?.linkedinUrl && { label: 'LinkedIn', url: profile.linkedinUrl },
+    profile?.websiteUrl && { label: 'Website', url: profile.websiteUrl },
+  ].filter((l): l is { label: string; url: string } => Boolean(l)),
+})
+
 export const createResume = Effect.fn('snapshots.createResume')(function* (
   ctx: MutationCtx,
-  args: { name: string; header: Header },
+  args: { name: string },
 ) {
   const userId = yield* requireUserId(ctx)
+  const profile = yield* Effect.promise(() =>
+    ctx.db
+      .query('profiles')
+      .withIndex('by_user', (q) => q.eq('userId', userId))
+      .unique(),
+  )
+  const header = headerFromProfile(profile)
   const slug = yield* userResumeSlug(ctx, userId, args.name)
   const resumeId = yield* Effect.promise(() =>
     ctx.db.insert('resumes', { userId, name: args.name, slug }),
@@ -72,7 +94,7 @@ export const createResume = Effect.fn('snapshots.createResume')(function* (
       message: 'init',
       blocks: [],
       theme: { id: 'classic' },
-      header: args.header,
+      header,
     }),
   )
   yield* Effect.promise(() => ctx.db.patch('branches', branchId, { headSnapshotId: snapshotId }))

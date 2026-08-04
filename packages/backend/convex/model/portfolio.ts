@@ -57,7 +57,7 @@ export const getPublicTeam = Effect.fn('portfolio.getPublicTeam')(function* (
       .collect(),
   )
   const projects = teamProjects
-    .filter((p): p is typeof p & { slug: string } => !!p.slug)
+    .filter((p): p is typeof p & { slug: string } => !!p.slug && p.published === true)
     .map((p) => ({
       name: p.name,
       slug: p.slug,
@@ -89,7 +89,8 @@ export const getPublicProject = Effect.fn('portfolio.getPublicProject')(function
       .withIndex('by_team_slug', (q) => q.eq('teamId', team._id).eq('slug', projectSlug))
       .unique(),
   )
-  if (!project) return null
+  // Unpublished reads exactly like not-found — never leak existence.
+  if (!project || project.published !== true) return null
 
   const screenshotUrls = yield* Effect.forEach(
     project.screenshotIds,

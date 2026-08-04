@@ -9,3 +9,10 @@ export const backfillSlugs = internalMutation({
   returns: v.object({ projects: v.number(), resumes: v.number() }),
   handler: (ctx) => run(Migrations.backfillSlugs(ctx)),
 })
+
+// Run with: bunx convex run migrations:backfillPublished [--prod]
+export const backfillPublished = internalMutation({
+  args: {},
+  returns: v.object({ projects: v.number() }),
+  handler: (ctx) => run(Migrations.backfillPublished(ctx)),
+})

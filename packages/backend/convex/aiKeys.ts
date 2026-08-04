@@ -8,12 +8,25 @@ import * as model from './model/aiKeys'
 const vProvider = v.union(v.literal('anthropic'), v.literal('openai'), v.literal('google'))
 
 export const setKey = mutation({
-  args: { provider: vProvider, apiKey: v.string() },
+  args: { provider: vProvider, apiKey: v.string(), model: v.optional(v.string()) },
   returns: v.null(),
   handler: (ctx, args) =>
     run(
       requireUserId(ctx).pipe(
-        Effect.flatMap((uid) => model.setKey(ctx, uid, args.provider, args.apiKey)),
+        Effect.flatMap((uid) => model.setKey(ctx, uid, args.provider, args.apiKey, args.model)),
+        Effect.as(null),
+      ),
+    ),
+})
+
+// undefined model = fall back to the provider default.
+export const setModel = mutation({
+  args: { provider: vProvider, model: v.optional(v.string()) },
+  returns: v.null(),
+  handler: (ctx, args) =>
+    run(
+      requireUserId(ctx).pipe(
+        Effect.flatMap((uid) => model.setModel(ctx, uid, args.provider, args.model)),
         Effect.as(null),
       ),
     ),
@@ -33,6 +46,8 @@ export const removeKey = mutation({
 
 export const myKeyStatus = query({
   args: {},
-  returns: v.array(v.object({ provider: vProvider, configured: v.literal(true) })),
+  returns: v.array(
+    v.object({ provider: vProvider, configured: v.literal(true), model: v.optional(v.string()) }),
+  ),
   handler: (ctx) => run(requireUserId(ctx).pipe(Effect.flatMap((uid) => model.myKeyStatus(ctx, uid)))),
 })

@@ -22,6 +22,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/shared/page-header'
 import { errorMessage } from '../lib/convexError'
+import { AiFillZone, type ExtractedProject } from './AiFillZone'
 import { Monogram } from './avatars'
 import { ContributionSection } from './ContributionSection'
 import { Markdown } from './Markdown'
@@ -43,6 +44,8 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
   const [description, setDescription] = useState('')
   const [demoUrl, setDemoUrl] = useState('')
   const [githubUrl, setGithubUrl] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
@@ -70,8 +73,22 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
     setDescription(project!.description)
     setDemoUrl(project!.demoUrl ?? '')
     setGithubUrl(project!.githubUrl ?? '')
+    setStartDate(project!.startDate ?? '')
+    setEndDate(project!.endDate ?? '')
     setError(null)
     setEditing(true)
+  }
+
+  function onFill(p: ExtractedProject) {
+    // Editing an existing project: only overwrite fields the AI returned.
+    if (p.name) setName(p.name)
+    if (p.subtitle) setSubtitle(p.subtitle)
+    if (p.brief) setBrief(p.brief)
+    if (p.description) setDescription(p.description)
+    if (p.demoUrl) setDemoUrl(p.demoUrl)
+    if (p.githubUrl) setGithubUrl(p.githubUrl)
+    if (p.startDate) setStartDate(p.startDate)
+    if (p.endDate) setEndDate(p.endDate)
   }
 
   async function onSave() {
@@ -86,6 +103,8 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
         brief: brief.trim() || undefined,
         demoUrl: demoUrl.trim() || undefined,
         githubUrl: githubUrl.trim() || undefined,
+        startDate: startDate.trim() || undefined,
+        endDate: endDate.trim() || undefined,
       })
       setEditing(false)
     } catch (err) {
@@ -123,6 +142,8 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
               <CardTitle className="font-heading text-base">Edit project</CardTitle>
             </CardHeader>
             <CardPanel className="flex flex-col gap-5">
+              <AiFillZone onFill={onFill} />
+
               <div className="flex flex-col gap-2">
                 <Label htmlFor="edit-name">Name</Label>
                 <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} />
@@ -145,6 +166,26 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
                   placeholder="One-paragraph summary of what this is."
                   className="min-h-20 resize-y text-sm"
                 />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="edit-start">Start date</Label>
+                  <Input
+                    id="edit-start"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    placeholder="Jan 2024"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="edit-end">End date</Label>
+                  <Input
+                    id="edit-end"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    placeholder="present"
+                  />
+                </div>
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="edit-description">Description</Label>
@@ -309,6 +350,12 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
                 </a>
               )}
             </div>
+          )}
+
+          {(project.startDate || project.endDate) && (
+            <p className="text-muted-foreground text-sm">
+              {[project.startDate, project.endDate].filter(Boolean).join(' — ')}
+            </p>
           )}
 
           {project.brief && (

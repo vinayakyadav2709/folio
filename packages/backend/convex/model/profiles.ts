@@ -1,5 +1,5 @@
 import { Effect } from 'effect'
-import type { Doc } from '../_generated/dataModel'
+import type { Doc, Id } from '../_generated/dataModel'
 import type { MutationCtx, QueryCtx } from '../_generated/server'
 import { getOrFail, requireUserId } from '../lib/access'
 import { Invalid } from '../lib/errors'
@@ -17,6 +17,8 @@ type ProfilePatch = {
   websiteUrl?: string
   skills?: Doc<'profiles'>['skills']
   education?: Doc<'profiles'>['education']
+  experience?: Doc<'profiles'>['experience']
+  achievements?: Doc<'profiles'>['achievements']
 }
 
 const myProfile = (ctx: QueryCtx | MutationCtx, userId: string) =>
@@ -27,9 +29,33 @@ const myProfile = (ctx: QueryCtx | MutationCtx, userId: string) =>
       .unique(),
   )
 
+const achievementMediaIds = (achievements: Doc<'profiles'>['achievements']) =>
+  (achievements ?? []).flatMap((a) => a.mediaIds ?? [])
+
+// Achievement media, keyed by storage id: the form rows only ever carry ids
+// (like projects.screenshotIds), so presentation data rides alongside as a map.
 export const getMyProfile = Effect.fn('profiles.getMyProfile')(function* (ctx: QueryCtx) {
   const userId = yield* requireUserId(ctx)
-  return yield* myProfile(ctx, userId)
+  const profile = yield* myProfile(ctx, userId)
+  if (!profile) return null
+  const entries = yield* Effect.forEach(
+    achievementMediaIds(profile.achievements),
+    (id) =>
+      Effect.promise(async () => {
+        const [url, meta] = await Promise.all([
+          ctx.storage.getUrl(id),
+          ctx.db.system.get('_storage', id),
+        ])
+        // Deleted/missing file — drop it rather than blowing up the query.
+        return url ? ([id, { url, contentType: meta?.contentType, size: meta?.size ?? 0 }] as const) : null
+      }),
+    { concurrency: 'unbounded' },
+  )
+  const media = Object.fromEntries(entries.filter((e) => e !== null)) as Record<
+    Id<'_storage'>,
+    { url: string; contentType?: string; size: number }
+  >
+  return { ...profile, media }
 })
 
 // Upsert all profile fields EXCEPT username.
@@ -40,7 +66,16 @@ export const updateMyProfile = Effect.fn('profiles.updateMyProfile')(function* (
   const userId = yield* requireUserId(ctx)
   const existing = yield* myProfile(ctx, userId)
   if (existing) {
+    // Media dropped from the user's own achievements loses its blob too, the
+    // same way projects.removeScreenshot deletes rather than just unlinking.
+    const kept = new Set<string>(patch.achievements ? achievementMediaIds(patch.achievements) : [])
+    const orphaned = patch.achievements
+      ? achievementMediaIds(existing.achievements).filter((id) => !kept.has(id))
+      : []
     yield* Effect.promise(() => ctx.db.patch('profiles', existing._id, patch))
+    yield* Effect.forEach(orphaned, (id) => Effect.promise(() => ctx.storage.delete(id)), {
+      concurrency: 'unbounded',
+    })
   } else {
     yield* Effect.promise(() =>
       ctx.db.insert('profiles', {
@@ -52,6 +87,15 @@ export const updateMyProfile = Effect.fn('profiles.updateMyProfile')(function* (
     )
   }
   return null
+})
+
+// Signed-in users upload achievement media straight to storage; the returned
+// storageId only becomes reachable once it lands in their own profile row.
+export const generateUploadUrl = Effect.fn('profiles.generateUploadUrl')(function* (
+  ctx: MutationCtx,
+) {
+  yield* requireUserId(ctx)
+  return yield* Effect.promise(() => ctx.storage.generateUploadUrl())
 })
 
 const USERNAME_RE = /^[a-z0-9-]{3,30}$/
@@ -118,7 +162,7 @@ export const getPublicProfile = Effect.fn('profiles.getPublicProfile')(function*
     (c) =>
       Effect.promise(() => ctx.db.get('projects', c.projectId)).pipe(
         Effect.flatMap((p) =>
-          p && p.slug
+          p && p.slug && p.published === true
             ? Effect.promise(() => ctx.db.get('teams', p.teamId)).pipe(
                 Effect.map((team) =>
                   team

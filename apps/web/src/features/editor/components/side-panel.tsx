@@ -1,16 +1,19 @@
-import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { Maximize2Icon, Minimize2Icon, PencilIcon, PlusIcon, XIcon } from 'lucide-react'
+import { useQuery } from 'convex/react'
+import { api } from '@folio/backend/api'
+import { CheckIcon, Maximize2Icon, Minimize2Icon, PlusIcon, XIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
 import { Preview } from './preview'
+import { TailorPanel } from './tailor-panel'
 import type { Block, Header, Theme } from '../lib/blocks'
 
 type Props = {
   blocks: Block[]
+  onBlocks: (blocks: Block[]) => void
   header: Header
   onHeader: (header: Header) => void
   theme: Theme
@@ -27,50 +30,89 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-// The header auto-fills from the user's profile on load (see EditorInner). Here
-// it reads as a compact, read-only summary — Settings stays the source of truth
-// — with an Override affordance for per-resume tweaks persisted in the snapshot.
-function HeaderSection({ header, onHeader }: { header: Header; onHeader: (h: Header) => void }) {
-  const [editing, setEditing] = useState(false)
-  const set = (patch: Partial<Header>) => onHeader({ ...header, ...patch })
+// Which profile values can be toggled onto the header. Plain fields land on the
+// header directly; the three URLs land in `links` under a fixed label.
+const CHANNELS = [
+  { key: 'email', label: 'Email' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'location', label: 'Location' },
+  { key: 'githubUrl', label: 'GitHub' },
+  { key: 'linkedinUrl', label: 'LinkedIn' },
+  { key: 'websiteUrl', label: 'Website' },
+] as const
 
-  if (!editing) {
-    const contact = [header.email, header.phone, header.location].filter(Boolean).join('  ·  ')
-    return (
-      <div className="flex flex-col gap-1.5 rounded-lg border border-border/60 bg-card p-3 shadow-xs">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="truncate font-medium text-sm text-pretty">{header.fullName || 'Your name'}</p>
-            {header.headline && (
-              <p className="truncate text-muted-foreground text-xs">{header.headline}</p>
-            )}
-          </div>
-          <Button
-            size="xs"
-            variant="ghost"
-            className="-mt-1 -me-1 shrink-0 text-muted-foreground"
-            onClick={() => setEditing(true)}
-          >
-            <PencilIcon />
-            Override
-          </Button>
-        </div>
-        {contact && <p className="truncate text-muted-foreground text-xs">{contact}</p>}
-        {header.links.length > 0 && (
-          <p className="truncate text-muted-foreground text-xs">
-            {header.links.map((l) => l.label || l.url).join('  ·  ')}
-          </p>
-        )}
-        <p className="mt-0.5 text-[10px] text-muted-foreground/70 text-pretty">
-          From your{' '}
-          <Link to="/dashboard/settings" className="underline underline-offset-2">
-            profile
-          </Link>{' '}
-          — override to tweak just this resume.
-        </p>
-      </div>
-    )
+type Channel = (typeof CHANNELS)[number]
+
+const isLink = (c: Channel) => c.key.endsWith('Url')
+
+// Toggle chips for every contact channel the profile actually has. Checked
+// state is derived from the header itself — no extra state to drift.
+function ProfileChannels({
+  header,
+  onHeader,
+}: {
+  header: Header
+  onHeader: (h: Header) => void
+}) {
+  const profile = useQuery(api.profiles.getMyProfile)
+  if (!profile) return null
+
+  const available = CHANNELS.map((c) => [c, profile[c.key]?.trim()] as const).filter(
+    (pair): pair is readonly [Channel, string] => Boolean(pair[1]),
+  )
+  if (available.length === 0) return null
+
+  const has = (c: Channel, value: string) =>
+    isLink(c) ? header.links.some((l) => l.url === value) : header[c.key as 'email'] === value
+
+  const toggle = (c: Channel, value: string, on: boolean) => {
+    if (isLink(c)) {
+      const links = header.links.filter((l) => l.url !== value && l.label !== c.label)
+      onHeader({ ...header, links: on ? [...links, { label: c.label, url: value }] : links })
+    } else {
+      onHeader({ ...header, [c.key]: on ? value : undefined })
+    }
   }
+
+  return (
+    <div className="flex flex-col gap-1.5 border-border/60 border-t pt-2">
+      <p className="text-[10px] text-muted-foreground/70 text-pretty">
+        From your{' '}
+        <Link to="/dashboard/settings" className="underline underline-offset-2">
+          profile
+        </Link>
+      </p>
+      <div className="flex flex-wrap gap-1">
+        {available.map(([c, value]) => {
+          const on = has(c, value)
+          return (
+            <button
+              key={c.key}
+              type="button"
+              aria-pressed={on}
+              title={value}
+              onClick={() => toggle(c, value, !on)}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs transition-colors',
+                on
+                  ? 'border-transparent bg-foreground/[0.08] text-foreground'
+                  : 'border-border/70 border-dashed text-muted-foreground hover:border-border hover:bg-foreground/[0.04] hover:text-foreground',
+              )}
+            >
+              {on ? <CheckIcon className="size-3" /> : <PlusIcon className="size-3" />}
+              {c.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// Header fields are always directly editable — the snapshot is the source of
+// truth. Profile values are opt-in per channel via the chips below.
+function HeaderSection({ header, onHeader }: { header: Header; onHeader: (h: Header) => void }) {
+  const set = (patch: Partial<Header>) => onHeader({ ...header, ...patch })
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-border/60 bg-card p-3 shadow-xs">
@@ -111,26 +153,24 @@ function HeaderSection({ header, onHeader }: { header: Header; onHeader: (h: Hea
             </Button>
           </div>
         ))}
-        <div className="flex items-center justify-between">
-          <Button
-            size="xs"
-            variant="ghost"
-            className="text-muted-foreground"
-            onClick={() => set({ links: [...header.links, { label: '', url: '' }] })}
-          >
-            <PlusIcon /> link
-          </Button>
-          <Button size="xs" variant="ghost" onClick={() => setEditing(false)}>
-            Done
-          </Button>
-        </div>
+        <Button
+          size="xs"
+          variant="ghost"
+          className="self-start text-muted-foreground"
+          onClick={() => set({ links: [...header.links, { label: '', url: '' }] })}
+        >
+          <PlusIcon /> link
+        </Button>
       </div>
+
+      <ProfileChannels header={header} onHeader={onHeader} />
     </div>
   )
 }
 
 export function SidePanel({
   blocks,
+  onBlocks,
   header,
   onHeader,
   theme,
@@ -142,6 +182,10 @@ export function SidePanel({
     <aside className="flex flex-col gap-3">
       <SectionLabel>Header</SectionLabel>
       <HeaderSection header={header} onHeader={onHeader} />
+
+      <Separator className="my-1" />
+      <SectionLabel>Tailor to job</SectionLabel>
+      <TailorPanel blocks={blocks} onBlocks={onBlocks} />
 
       <Separator className="my-1" />
       <SectionLabel>Theme</SectionLabel>

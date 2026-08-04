@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react'
+import { useMemo, useState, type ReactElement } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@folio/backend/api'
@@ -30,23 +30,26 @@ import { ResumeCard } from './resume-card'
 import { errorMessage } from '../lib/errors'
 
 export function ResumesList() {
-  const resumes = useQuery(api.resumes.listMyResumes)
+  const raw = useQuery(api.resumes.listMyResumes)
+  // Newest first — the resume you just created is the one you want to open.
+  const resumes = useMemo(
+    () => raw && [...raw].sort((a, b) => b._creationTime - a._creationTime),
+    [raw],
+  )
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Resumes"
         actions={
-          resumes !== undefined && resumes.length > 0 ? (
-            <CreateResumeDialog
-              trigger={
-                <Button>
-                  <PlusIcon />
-                  New resume
-                </Button>
-              }
-            />
-          ) : undefined
+          <CreateResumeDialog
+            trigger={
+              <Button>
+                <PlusIcon />
+                New resume
+              </Button>
+            }
+          />
         }
       />
 
@@ -95,9 +98,6 @@ function CreateResumeDialog({ trigger }: { trigger: ReactElement }) {
   const createResume = useMutation(api.resumes.createResume)
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
-  const [fullName, setFullName] = useState('')
-  const [headline, setHeadline] = useState('')
-  const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -106,15 +106,8 @@ function CreateResumeDialog({ trigger }: { trigger: ReactElement }) {
     setError(null)
     setSaving(true)
     try {
-      const resumeId = await createResume({
-        name,
-        header: {
-          fullName,
-          headline: headline.trim() || undefined,
-          email: email.trim() || undefined,
-          links: [],
-        },
-      })
+      // The server builds the initial header from your profile.
+      const resumeId = await createResume({ name })
       navigate({ to: '/dashboard/resumes/$resumeId', params: { resumeId } })
     } catch (err) {
       setError(errorMessage(err))
@@ -135,23 +128,11 @@ function CreateResumeDialog({ trigger }: { trigger: ReactElement }) {
               <FieldLabel>Resume name</FieldLabel>
               <Input value={name} autoFocus placeholder="Backend roles" onChange={(e) => setName(e.target.value)} />
             </Field>
-            <Field>
-              <FieldLabel>Full name</FieldLabel>
-              <Input value={fullName} placeholder="Ada Lovelace" onChange={(e) => setFullName(e.target.value)} />
-            </Field>
-            <Field>
-              <FieldLabel>Headline</FieldLabel>
-              <Input value={headline} placeholder="Software Engineer" onChange={(e) => setHeadline(e.target.value)} />
-            </Field>
-            <Field>
-              <FieldLabel>Email</FieldLabel>
-              <Input value={email} type="email" placeholder="ada@example.com" onChange={(e) => setEmail(e.target.value)} />
-            </Field>
             {error && <p className="text-destructive text-sm text-pretty">{error}</p>}
           </DialogPanel>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" type="button" />}>Cancel</DialogClose>
-            <Button type="submit" disabled={saving || !name || !fullName}>
+            <Button type="submit" disabled={saving || !name.trim()}>
               {saving ? 'Creating…' : 'Create'}
             </Button>
           </DialogFooter>

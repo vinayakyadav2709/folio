@@ -3,7 +3,14 @@ import { Link } from '@tanstack/react-router'
 import { useConvex, useQuery } from 'convex/react'
 import { api } from '@folio/backend/api'
 import type { Id } from '@folio/backend/dataModel'
-import { ContactIcon, GraduationCapIcon, ImportIcon, PlusIcon, WandSparklesIcon } from 'lucide-react'
+import {
+  BriefcaseIcon,
+  ContactIcon,
+  GraduationCapIcon,
+  ImportIcon,
+  PlusIcon,
+  WandSparklesIcon,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
@@ -13,6 +20,7 @@ import {
   headerFromProfile,
   newBlock,
   newEducationBlock,
+  newExperienceBlock,
   newProjectBlock,
   newSkillsBlock,
   type Block,
@@ -48,13 +56,13 @@ export function BlockLibrary({
   const [adding, setAdding] = useState<string | null>(null)
 
   // Fetch my contribution bullets on demand — one query per add, not per render.
-  async function addProject(projectId: Id<'projects'>, name: string) {
+  async function addProject(projectId: Id<'projects'>) {
     setAdding(projectId)
     try {
       const detail = await convex.query(api.projects.getProject, { projectId })
       const myId = (me as { _id?: string } | null)?._id
       const mine = detail.contributions.find((c) => c.userId === myId)
-      onAdd(newProjectBlock({ _id: projectId, name }, mine?.bullets ?? []))
+      onAdd(newProjectBlock(detail, mine?.bullets ?? []))
     } finally {
       setAdding(null)
     }
@@ -108,7 +116,7 @@ export function BlockLibrary({
                     aria-label={`Add ${p.name}`}
                     className="shrink-0 text-muted-foreground/60 transition-colors hover:text-foreground group-hover:text-foreground"
                     loading={adding === p._id}
-                    onClick={() => addProject(p._id, p.name)}
+                    onClick={() => addProject(p._id)}
                   >
                     <PlusIcon />
                   </Button>
@@ -145,6 +153,7 @@ export function BlockLibrary({
             type="button"
             onClick={() => {
               onApplyHeader(headerFromProfile(profile))
+              for (const entry of profile.experience ?? []) onAdd(newExperienceBlock(entry))
               for (const entry of profile.education) onAdd(newEducationBlock(entry))
               if (profile.skills.length > 0) onAdd(newSkillsBlock(profile.skills))
             }}
@@ -162,6 +171,19 @@ export function BlockLibrary({
             <ContactIcon className="size-3.5 shrink-0" />
             Contact info
           </button>
+          {(profile.experience ?? []).map((entry, i) => (
+            <button
+              key={`x${i}`}
+              type="button"
+              onClick={() => onAdd(newExperienceBlock(entry))}
+              className={PULL_ITEM}
+            >
+              <BriefcaseIcon className="size-3.5 shrink-0" />
+              <span className="truncate" title={entry.company}>
+                {entry.company || 'Experience'}
+              </span>
+            </button>
+          ))}
           {profile.education.map((entry, i) => (
             <button
               key={i}
@@ -185,15 +207,17 @@ export function BlockLibrary({
               Skills
             </button>
           )}
-          {profile.education.length === 0 && profile.skills.length === 0 && (
-            <p className="text-muted-foreground text-sm text-pretty">
-              Add education and skills in{' '}
-              <Link to="/dashboard/settings" className="underline underline-offset-2">
-                Settings
-              </Link>
-              .
-            </p>
-          )}
+          {profile.education.length === 0 &&
+            profile.skills.length === 0 &&
+            (profile.experience ?? []).length === 0 && (
+              <p className="text-muted-foreground text-sm text-pretty">
+                Add experience, education, and skills in{' '}
+                <Link to="/dashboard/settings" className="underline underline-offset-2">
+                  Settings
+                </Link>
+                .
+              </p>
+            )}
         </div>
       )}
 

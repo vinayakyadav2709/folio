@@ -18,12 +18,27 @@ export const setKey = Effect.fn('aiKeys.setKey')(function* (
   userId: string,
   provider: Provider,
   apiKey: string,
+  model?: string,
 ) {
   const encryptedKey = yield* Effect.promise(() => encryptKey(apiKey))
   const existing = (yield* userKeys(ctx, userId)).find((k) => k.provider === provider)
   yield* existing
-    ? Effect.promise(() => ctx.db.patch(existing._id, { encryptedKey }))
-    : Effect.promise(() => ctx.db.insert('aiKeys', { userId, provider, encryptedKey }))
+    ? Effect.promise(() =>
+        ctx.db.patch(existing._id, model === undefined ? { encryptedKey } : { encryptedKey, model }),
+      )
+    : Effect.promise(() => ctx.db.insert('aiKeys', { userId, provider, encryptedKey, model }))
+})
+
+// Change only which model this provider's key uses. undefined clears it back to
+// the provider default (Convex treats an undefined patch value as field removal).
+export const setModel = Effect.fn('aiKeys.setModel')(function* (
+  ctx: MutationCtx,
+  userId: string,
+  provider: Provider,
+  model: string | undefined,
+) {
+  const match = (yield* userKeys(ctx, userId)).find((k) => k.provider === provider)
+  if (match) yield* Effect.promise(() => ctx.db.patch(match._id, { model }))
 })
 
 export const removeKey = Effect.fn('aiKeys.removeKey')(function* (
@@ -41,7 +56,7 @@ export const myKeyStatus = Effect.fn('aiKeys.myKeyStatus')(function* (
   userId: string,
 ) {
   const keys = yield* userKeys(ctx, userId)
-  return keys.map((k) => ({ provider: k.provider, configured: true as const }))
+  return keys.map((k) => ({ provider: k.provider, configured: true as const, model: k.model }))
 })
 
 // The encrypted doc for one configured key, preferring anthropic. Decryption
@@ -52,5 +67,7 @@ export const getPreferredKey = Effect.fn('aiKeys.getPreferredKey')(function* (
 ) {
   const keys = yield* userKeys(ctx, userId)
   const chosen = keys.find((k) => k.provider === 'anthropic') ?? keys[0]
-  return chosen ? { provider: chosen.provider, encryptedKey: chosen.encryptedKey } : null
+  return chosen
+    ? { provider: chosen.provider, encryptedKey: chosen.encryptedKey, model: chosen.model }
+    : null
 })

@@ -1,26 +1,49 @@
 import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@folio/backend/api'
-import { GraduationCapIcon, KeyIcon, LinkIcon, UserIcon, WrenchIcon } from 'lucide-react'
+import {
+  AwardIcon,
+  BriefcaseIcon,
+  GraduationCapIcon,
+  KeyIcon,
+  LinkIcon,
+  SparklesIcon,
+  UserIcon,
+  WrenchIcon,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/shared/page-header'
 import { useProfileForm } from '../lib/use-profile-form'
 import { AiKeysCard } from './ai-keys-card'
+import { ImportResumeCard } from './import-resume-card'
 import {
+  AchievementsSection,
   ContactSection,
   EducationSection,
+  ExperienceSection,
   ProfileSection,
   SkillsSection,
 } from './profile-sections'
 
-type SectionId = 'profile' | 'contact' | 'skills' | 'education' | 'ai'
+type SectionId =
+  | 'profile'
+  | 'contact'
+  | 'experience'
+  | 'skills'
+  | 'education'
+  | 'achievements'
+  | 'import'
+  | 'ai'
 
 const NAV: { id: SectionId; label: string; icon: LucideIcon }[] = [
   { id: 'profile', label: 'Profile', icon: UserIcon },
   { id: 'contact', label: 'Contact & links', icon: LinkIcon },
+  { id: 'experience', label: 'Work experience', icon: BriefcaseIcon },
   { id: 'skills', label: 'Skills', icon: WrenchIcon },
   { id: 'education', label: 'Education', icon: GraduationCapIcon },
+  { id: 'achievements', label: 'Achievements', icon: AwardIcon },
+  { id: 'import', label: 'Import', icon: SparklesIcon },
   { id: 'ai', label: 'AI keys', icon: KeyIcon },
 ]
 
@@ -59,6 +82,8 @@ export function SettingsScreen() {
       <div className="flex min-w-0 flex-col">
         {active === 'ai' ? (
           <AiKeysCard />
+        ) : active === 'import' ? (
+          <ImportResumeCard />
         ) : profile === undefined ? (
           <div className="flex flex-col gap-4">
             <Skeleton className="h-16 w-full rounded-lg" />
@@ -68,8 +93,12 @@ export function SettingsScreen() {
           <ProfileSection form={form} username={profile?.username ?? ''} />
         ) : active === 'contact' ? (
           <ContactSection form={form} />
+        ) : active === 'experience' ? (
+          <ExperienceSection form={form} />
         ) : active === 'skills' ? (
           <SkillsSection form={form} />
+        ) : active === 'achievements' ? (
+          <AchievementsSection form={form} media={profile?.media ?? {}} />
         ) : (
           <EducationSection form={form} />
         )}

@@ -278,6 +278,7 @@ function EditorInner({
         <Canvas blocks={blocks} onChange={setBlocks} />
         <SidePanel
           blocks={blocks}
+          onBlocks={setBlocks}
           header={header}
           onHeader={setHeader}
           theme={theme}

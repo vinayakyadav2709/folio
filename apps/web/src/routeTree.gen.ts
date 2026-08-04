@@ -19,6 +19,7 @@ import { Route as DashboardTeamsRouteImport } from './routes/dashboard.teams'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
 import { Route as DashboardResumesRouteImport } from './routes/dashboard.resumes'
 import { Route as DashboardProjectsRouteImport } from './routes/dashboard.projects'
+import { Route as DashboardJobsRouteImport } from './routes/dashboard.jobs'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as UUsernameIndexRouteImport } from './routes/u.$username.index'
 import { Route as DashboardTeamsIndexRouteImport } from './routes/dashboard.teams.index'
@@ -79,6 +80,11 @@ const DashboardResumesRoute = DashboardResumesRouteImport.update({
 const DashboardProjectsRoute = DashboardProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardJobsRoute = DashboardJobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardAdminRoute = DashboardAdminRouteImport.update({
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/jobs': typeof DashboardJobsRoute
   '/dashboard/projects': typeof DashboardProjectsRouteWithChildren
   '/dashboard/resumes': typeof DashboardResumesRouteWithChildren
   '/dashboard/settings': typeof DashboardSettingsRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/jobs': typeof DashboardJobsRoute
   '/dashboard/projects': typeof DashboardProjectsRouteWithChildren
   '/dashboard/resumes': typeof DashboardResumesRouteWithChildren
   '/dashboard/settings': typeof DashboardSettingsRoute
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/jobs': typeof DashboardJobsRoute
   '/dashboard/projects': typeof DashboardProjectsRouteWithChildren
   '/dashboard/resumes': typeof DashboardResumesRouteWithChildren
   '/dashboard/settings': typeof DashboardSettingsRoute
@@ -214,6 +223,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/reset-password'
     | '/dashboard/admin'
+    | '/dashboard/jobs'
     | '/dashboard/projects'
     | '/dashboard/resumes'
     | '/dashboard/settings'
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/'
     | '/reset-password'
     | '/dashboard/admin'
+    | '/dashboard/jobs'
     | '/dashboard/projects'
     | '/dashboard/resumes'
     | '/dashboard/settings'
@@ -257,6 +268,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/reset-password'
     | '/dashboard/admin'
+    | '/dashboard/jobs'
     | '/dashboard/projects'
     | '/dashboard/resumes'
     | '/dashboard/settings'
@@ -356,6 +368,13 @@ declare module '@tanstack/react-router' {
       path: '/projects'
       fullPath: '/dashboard/projects'
       preLoaderRoute: typeof DashboardProjectsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/jobs': {
+      id: '/dashboard/jobs'
+      path: '/jobs'
+      fullPath: '/dashboard/jobs'
+      preLoaderRoute: typeof DashboardJobsRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/admin': {
@@ -492,6 +511,7 @@ const DashboardTeamsRouteWithChildren = DashboardTeamsRoute._addFileChildren(
 
 interface DashboardRouteChildren {
   DashboardAdminRoute: typeof DashboardAdminRoute
+  DashboardJobsRoute: typeof DashboardJobsRoute
   DashboardProjectsRoute: typeof DashboardProjectsRouteWithChildren
   DashboardResumesRoute: typeof DashboardResumesRouteWithChildren
   DashboardSettingsRoute: typeof DashboardSettingsRoute
@@ -501,6 +521,7 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAdminRoute: DashboardAdminRoute,
+  DashboardJobsRoute: DashboardJobsRoute,
   DashboardProjectsRoute: DashboardProjectsRouteWithChildren,
   DashboardResumesRoute: DashboardResumesRouteWithChildren,
   DashboardSettingsRoute: DashboardSettingsRoute,

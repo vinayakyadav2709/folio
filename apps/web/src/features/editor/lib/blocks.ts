@@ -13,15 +13,33 @@ export function newBlock(type: (typeof BLANK_TYPES)[number]): Block {
   return { id: uuidv7(), type, title: '', bullets: [] }
 }
 
-export function newProjectBlock(
-  project: { _id: Id<'projects'>; name: string },
-  bullets: string[],
-): Block {
+export type UpstreamProject = {
+  _id: Id<'projects'>
+  name: string
+  startDate?: string
+  endDate?: string
+  demoUrl?: string
+  githubUrl?: string
+}
+
+// The fields a project block mirrors from upstream — used on insert and on Pull.
+export function projectFields(project: Omit<UpstreamProject, '_id'>) {
+  return {
+    title: project.name,
+    dateRange: dateRange(project.startDate, project.endDate),
+    links: [
+      project.demoUrl && { label: 'Demo', url: project.demoUrl },
+      project.githubUrl && { label: 'GitHub', url: project.githubUrl },
+    ].filter((l): l is { label: string; url: string } => Boolean(l)),
+  }
+}
+
+export function newProjectBlock(project: UpstreamProject, bullets: string[]): Block {
   return {
     id: uuidv7(),
     type: 'project',
     projectId: project._id,
-    title: project.name,
+    ...projectFields(project),
     bullets,
     syncedAt: Date.now(),
   }
@@ -36,6 +54,14 @@ type ProfileEducation = {
   startDate?: string
   endDate?: string
   gpa?: string
+}
+type ProfileExperience = {
+  company: string
+  role?: string
+  location?: string
+  startDate?: string
+  endDate?: string
+  bullets: string[]
 }
 type ProfileSkill = { category: string; items: string[] }
 
@@ -55,6 +81,20 @@ export function newEducationBlock(entry: ProfileEducation): Block {
     subtitle: subtitle || undefined,
     dateRange: dateRange(entry.startDate, entry.endDate),
     bullets: entry.gpa ? [`GPA: ${entry.gpa}`] : [],
+  }
+}
+
+// One Experience block per profile entry: company as title, role (+ location)
+// as subtitle, start–end as the date range, bullets carried over as-is.
+export function newExperienceBlock(entry: ProfileExperience): Block {
+  const subtitle = [entry.role, entry.location].filter(Boolean).join(' · ')
+  return {
+    id: uuidv7(),
+    type: 'experience',
+    title: entry.company,
+    subtitle: subtitle || undefined,
+    dateRange: dateRange(entry.startDate, entry.endDate),
+    bullets: entry.bullets,
   }
 }
 

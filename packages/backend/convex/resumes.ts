@@ -24,7 +24,7 @@ const vResumeDoc = v.object({
 })
 
 export const createResume = mutation({
-  args: { name: v.string(), header: vHeader },
+  args: { name: v.string() },
   returns: v.id('resumes'),
   handler: (ctx, args) => run(Snapshots.createResume(ctx, args)),
 })

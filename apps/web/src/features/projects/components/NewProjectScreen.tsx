@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { useAction, useMutation, useQuery } from 'convex/react'
-import { FileText, Sparkles } from 'lucide-react'
+import { useMutation, useQuery } from 'convex/react'
+import { FileText } from 'lucide-react'
 import { api } from '@folio/backend/api'
 import type { Id } from '@folio/backend/dataModel'
 import { Button } from '@/components/ui/button'
@@ -12,8 +12,9 @@ import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/shared/page-header'
-import { convexErrorData, errorMessage } from '../lib/convexError'
+import { errorMessage } from '../lib/convexError'
 import { useSelectedTeam } from '../lib/useSelectedTeam'
+import { AiFillZone, type ExtractedProject } from './AiFillZone'
 import { Markdown } from './Markdown'
 import { TeamPicker } from './TeamPicker'
 
@@ -22,7 +23,6 @@ export function NewProjectScreen() {
   const [remembered] = useSelectedTeam()
   const [picked, setPicked] = useState<string | null>(null)
   const createProject = useMutation(api.projects.createProject)
-  const generateDescription = useAction(api.ai.generateDescription)
   const navigate = useNavigate()
 
   const [name, setName] = useState('')
@@ -31,9 +31,9 @@ export function NewProjectScreen() {
   const [description, setDescription] = useState('')
   const [demoUrl, setDemoUrl] = useState('')
   const [githubUrl, setGithubUrl] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [saving, setSaving] = useState(false)
-  const [aiLoading, setAiLoading] = useState(false)
-  const [aiNoKey, setAiNoKey] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Destination team: explicit pick > remembered filter (if it's a real team,
@@ -46,20 +46,17 @@ export function NewProjectScreen() {
         teams[0]._id)
       : null
 
-  async function onGenerate() {
-    setAiLoading(true)
-    setAiNoKey(false)
-    setError(null)
-    try {
-      const text = await generateDescription({ name, notes: description })
-      setDescription(text)
-    } catch (err) {
-      const data = convexErrorData(err)
-      if (data && data.message.toLowerCase().includes('no ai key')) setAiNoKey(true)
-      else setError(errorMessage(err))
-    } finally {
-      setAiLoading(false)
-    }
+  function onFill(p: ExtractedProject) {
+    // Only overwrite what the AI actually returned — never blank a field the
+    // user already filled in.
+    if (p.name) setName(p.name)
+    if (p.subtitle) setSubtitle(p.subtitle)
+    if (p.brief) setBrief(p.brief)
+    if (p.description) setDescription(p.description)
+    if (p.demoUrl) setDemoUrl(p.demoUrl)
+    if (p.githubUrl) setGithubUrl(p.githubUrl)
+    if (p.startDate) setStartDate(p.startDate)
+    if (p.endDate) setEndDate(p.endDate)
   }
 
   async function onSave() {
@@ -75,6 +72,8 @@ export function NewProjectScreen() {
         brief: brief.trim() || undefined,
         demoUrl: demoUrl.trim() || undefined,
         githubUrl: githubUrl.trim() || undefined,
+        startDate: startDate.trim() || undefined,
+        endDate: endDate.trim() || undefined,
       })
       navigate({ to: '/dashboard/projects/$projectId', params: { projectId } })
     } catch (err) {
@@ -140,6 +139,8 @@ export function NewProjectScreen() {
             <CardDescription>Team, name, and a Markdown description.</CardDescription>
           </CardHeader>
           <CardPanel className="flex flex-col gap-5">
+            <AiFillZone onFill={onFill} />
+
             <div className="flex flex-col gap-2">
               <Label>Team</Label>
               <TeamPicker teams={teams} selectedId={teamId} onSelect={setPicked} />
@@ -176,30 +177,29 @@ export function NewProjectScreen() {
               />
             </div>
 
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between gap-2">
-                <Label htmlFor="project-description">Description</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={onGenerate}
-                  loading={aiLoading}
-                  disabled={!name.trim() || aiLoading}
-                  className="border-violet-500/30 bg-gradient-to-r from-violet-500/10 to-sky-500/10 transition-[background-color,box-shadow,scale] hover:from-violet-500/20 hover:to-sky-500/20 active:scale-[0.96] dark:border-violet-400/30"
-                >
-                  <Sparkles className="text-violet-500 dark:text-violet-300" /> Generate with AI
-                </Button>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="project-start">Start date</Label>
+                <Input
+                  id="project-start"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  placeholder="Jan 2024"
+                />
               </div>
-              {aiNoKey && (
-                <p className="text-muted-foreground text-sm">
-                  No AI key configured.{' '}
-                  <Link to="/dashboard/settings" className="underline underline-offset-4">
-                    Add one in Settings
-                  </Link>{' '}
-                  to use AI assist.
-                </p>
-              )}
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="project-end">End date</Label>
+                <Input
+                  id="project-end"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  placeholder="present"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="project-description">Description</Label>
               <Textarea
                 id="project-description"
                 value={description}

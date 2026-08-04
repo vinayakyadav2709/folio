@@ -27,7 +27,10 @@ export const createProject = Effect.fn('projects.createProject')(function* (
     brief?: string
     demoUrl?: string
     githubUrl?: string
+    startDate?: string
+    endDate?: string
     links?: Link[]
+    published?: boolean
   },
 ) {
   const userId = yield* requireUserId(ctx)
@@ -44,8 +47,12 @@ export const createProject = Effect.fn('projects.createProject')(function* (
       description: args.description,
       demoUrl: args.demoUrl,
       githubUrl: args.githubUrl,
+      startDate: args.startDate,
+      endDate: args.endDate,
       links: args.links ?? [],
       screenshotIds: [],
+      published: args.published, // omitted = private
+
       updatedAt: Date.now(),
     }),
   )
@@ -63,7 +70,10 @@ export const updateProject = Effect.fn('projects.updateProject')(function* (
     brief?: string
     demoUrl?: string
     githubUrl?: string
+    startDate?: string
+    endDate?: string
     links?: Link[]
+    published?: boolean
   },
 ) {
   const userId = yield* requireUserId(ctx)

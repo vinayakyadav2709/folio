@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverPopup, PopoverTrigger } from '@/components/ui/popover'
 import { Spinner } from '@/components/ui/spinner'
-import type { Block } from '../lib/blocks'
+import { projectFields, type Block } from '../lib/blocks'
 import { errorMessage } from '../lib/errors'
 
 type Props = {
@@ -38,7 +38,10 @@ export function BlockCard({ block, onChange, onRemove, dragHandleProps }: Props)
         </span>
         {block.projectId && (
           <QueryBoundary>
-            <UpstreamHint block={block} onPull={(name) => set({ title: name, syncedAt: Date.now() })} />
+            <UpstreamHint
+              block={block}
+              onPull={(fields) => set({ ...fields, syncedAt: Date.now() })}
+            />
           </QueryBoundary>
         )}
         <span className="flex-1" />
@@ -208,14 +211,25 @@ function BulletRow({
 }
 
 // Shows a hint when the upstream project changed after this block was synced.
-// Pull refreshes title + syncedAt only — bullets stay personal.
-function UpstreamHint({ block, onPull }: { block: Block; onPull: (name: string) => void }) {
+// Pull refreshes title, dates, and links + syncedAt — bullets stay personal.
+function UpstreamHint({
+  block,
+  onPull,
+}: {
+  block: Block
+  onPull: (fields: ReturnType<typeof projectFields>) => void
+}) {
   const project = useQuery(api.projects.getProject, { projectId: block.projectId! })
   if (!project || (block.syncedAt ?? 0) >= project.updatedAt) return null
   return (
     <span className="flex items-center gap-1.5 rounded-full bg-warning/8 py-0.5 pr-1 pl-2.5 text-warning-foreground text-xs dark:bg-warning/16">
       upstream updated
-      <Button size="xs" variant="outline" className="h-5 rounded-full sm:h-5" onClick={() => onPull(project.name)}>
+      <Button
+        size="xs"
+        variant="outline"
+        className="h-5 rounded-full sm:h-5"
+        onClick={() => onPull(projectFields(project))}
+      >
         Pull
       </Button>
     </span>

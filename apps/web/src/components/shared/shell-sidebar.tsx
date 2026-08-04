@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import {
   AtSignIcon,
+  BriefcaseIcon,
   FileTextIcon,
   FolderKanbanIcon,
   LayoutDashboardIcon,
@@ -50,6 +51,7 @@ export const SHELL_NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
       { to: '/dashboard/teams', label: 'Teams', Icon: UsersIcon },
       { to: '/dashboard/projects', label: 'Projects', Icon: FolderKanbanIcon },
       { to: '/dashboard/resumes', label: 'Resumes', Icon: FileTextIcon },
+      { to: '/dashboard/jobs', label: 'Jobs', Icon: BriefcaseIcon },
     ],
   },
 ]
