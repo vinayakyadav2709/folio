@@ -63,6 +63,47 @@ export function PanelField({
   )
 }
 
+/**
+ * The page-header variant of {@link SaveBar}: the same dirty/save/discard
+ * grammar compressed into a PageHeader `actions` row, for the profile pages
+ * that are full dashboard pages rather than a settings panel.
+ */
+export function SaveActions({ section }: { section: SaveSection }) {
+  const { saving, saved, error, run } = useSectionSave()
+  const { dirty, save, discard } = section
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="mr-1 min-w-0 font-mono text-[10px] uppercase tracking-[0.25em]">
+        {error ? (
+          <span className="text-destructive-foreground normal-case tracking-normal">{error}</span>
+        ) : dirty ? (
+          <span className="text-muted-foreground">Unsaved</span>
+        ) : saved ? (
+          <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+            <CheckIcon className="size-3" /> Saved
+          </span>
+        ) : null}
+      </span>
+      {dirty && (
+        <Button variant="ghost" size="sm" type="button" onClick={discard} disabled={saving}>
+          Discard
+        </Button>
+      )}
+      <Button
+        size="sm"
+        type="button"
+        onClick={() => run(save)}
+        loading={saving}
+        disabled={!dirty}
+        className="active:scale-[0.96]"
+      >
+        Save changes
+      </Button>
+    </div>
+  )
+}
+
 // One dirty-state save bar for every section. Pinned to the bottom of the
 // content column (mt-auto pushes it down when the section is short; sticky
 // keeps it in view while a long panel scrolls), enabling only when the

@@ -12,11 +12,11 @@ import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/shared/page-header'
+import { TeamPicker } from '@/components/shared/team-picker'
 import { errorMessage } from '../lib/convexError'
 import { useSelectedTeam } from '../lib/useSelectedTeam'
 import { AiFillZone, type ExtractedProject } from './AiFillZone'
 import { Markdown } from './Markdown'
-import { TeamPicker } from './TeamPicker'
 
 export function NewProjectScreen() {
   const teams = useQuery(api.teams.listMyTeams)

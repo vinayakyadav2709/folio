@@ -29,17 +29,25 @@ const myProfile = (ctx: QueryCtx | MutationCtx, userId: string) =>
       .unique(),
   )
 
-const achievementMediaIds = (achievements: Doc<'profiles'>['achievements']) =>
-  (achievements ?? []).flatMap((a) => a.mediaIds ?? [])
+// The three sections whose entries can carry attached media.
+const MEDIA_SECTIONS = ['achievements', 'education', 'experience'] as const
+type MediaEntries = readonly { mediaIds?: Id<'_storage'>[] }[] | undefined
 
-// Achievement media, keyed by storage id: the form rows only ever carry ids
+const mediaIdsIn = (entries: MediaEntries) => (entries ?? []).flatMap((e) => e.mediaIds ?? [])
+
+// Every storage id referenced anywhere on the profile, deduped.
+const allMediaIds = (p: { [K in (typeof MEDIA_SECTIONS)[number]]?: MediaEntries }) => [
+  ...new Set(MEDIA_SECTIONS.flatMap((k) => mediaIdsIn(p[k]))),
+]
+
+// Entry media, keyed by storage id: the form rows only ever carry ids
 // (like projects.screenshotIds), so presentation data rides alongside as a map.
 export const getMyProfile = Effect.fn('profiles.getMyProfile')(function* (ctx: QueryCtx) {
   const userId = yield* requireUserId(ctx)
   const profile = yield* myProfile(ctx, userId)
   if (!profile) return null
   const entries = yield* Effect.forEach(
-    achievementMediaIds(profile.achievements),
+    allMediaIds(profile),
     (id) =>
       Effect.promise(async () => {
         const [url, meta] = await Promise.all([
@@ -66,12 +74,20 @@ export const updateMyProfile = Effect.fn('profiles.updateMyProfile')(function* (
   const userId = yield* requireUserId(ctx)
   const existing = yield* myProfile(ctx, userId)
   if (existing) {
-    // Media dropped from the user's own achievements loses its blob too, the
-    // same way projects.removeScreenshot deletes rather than just unlinking.
-    const kept = new Set<string>(patch.achievements ? achievementMediaIds(patch.achievements) : [])
-    const orphaned = patch.achievements
-      ? achievementMediaIds(existing.achievements).filter((id) => !kept.has(id))
-      : []
+    // Media dropped from the user's own entries loses its blob too, the same
+    // way projects.removeScreenshot deletes rather than just unlinking. A blob
+    // only dies when NO section still references it after the patch — sections
+    // this patch doesn't carry keep their stored ids alive.
+    const kept = new Set<string>(
+      allMediaIds({
+        achievements: patch.achievements ?? existing.achievements,
+        education: patch.education ?? existing.education,
+        experience: patch.experience ?? existing.experience,
+      }),
+    )
+    const orphaned = [
+      ...new Set(MEDIA_SECTIONS.flatMap((k) => (patch[k] ? mediaIdsIn(existing[k]) : []))),
+    ].filter((id) => !kept.has(id))
     yield* Effect.promise(() => ctx.db.patch('profiles', existing._id, patch))
     yield* Effect.forEach(orphaned, (id) => Effect.promise(() => ctx.storage.delete(id)), {
       concurrency: 'unbounded',

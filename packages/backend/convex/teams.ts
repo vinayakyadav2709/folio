@@ -1,7 +1,9 @@
 import { v } from 'convex/values'
 import { mutation, query } from './_generated/server'
+import { requireUserId } from './lib/access'
 import { run } from './lib/errors'
 import * as Teams from './model/teams'
+import { Effect } from 'effect'
 
 const vRole = v.union(v.literal('admin'), v.literal('member'))
 
@@ -10,12 +12,25 @@ const vTeam = v.object({
   _creationTime: v.number(),
   name: v.string(),
   slug: v.string(),
+  personal: v.optional(v.boolean()),
 })
 
 export const createTeam = mutation({
   args: { name: v.string(), slug: v.string() },
   returns: vTeam,
   handler: (ctx, args) => run(Teams.createTeam(ctx, args.name, args.slug)),
+})
+
+export const ensurePersonalTeam = mutation({
+  args: {},
+  returns: v.id('teams'),
+  handler: (ctx) =>
+    run(
+      requireUserId(ctx).pipe(
+        Effect.flatMap((userId) => Teams.ensurePersonalTeam(ctx, userId)),
+        Effect.map((team) => team._id),
+      ),
+    ),
 })
 
 export const listMyTeams = query({
@@ -57,4 +72,10 @@ export const leaveTeam = mutation({
   args: { teamId: v.id('teams') },
   returns: v.null(),
   handler: (ctx, args) => run(Teams.leaveTeam(ctx, args.teamId)),
+})
+
+export const deleteTeam = mutation({
+  args: { teamId: v.id('teams'), deleteProjects: v.optional(v.boolean()) },
+  returns: v.null(),
+  handler: (ctx, args) => run(Teams.deleteTeam(ctx, args.teamId, args.deleteProjects)),
 })

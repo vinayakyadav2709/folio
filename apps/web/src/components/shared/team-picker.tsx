@@ -8,9 +8,19 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 
-export type TeamOption = { _id: string; name: string }
+export type TeamOption = { _id: string; name: string; personal?: boolean }
 
 export const ALL_TEAMS = 'all'
+
+/** The personal team is the private default home, so it always leads the list. */
+export function sortTeams<T extends { personal?: boolean }>(teams: readonly T[]): T[] {
+  return [...teams].sort((a, b) => Number(b.personal ?? false) - Number(a.personal ?? false))
+}
+
+/** Label a team in any picker — the personal one is marked as the private option. */
+export function teamLabel(team: TeamOption): string {
+  return team.personal ? `${team.name} · Personal` : team.name
+}
 
 /**
  * Compact team selector — the devl filter-toolbar scoped-select pattern.
@@ -33,7 +43,7 @@ export function TeamPicker({
   if (teams.length === 0) return null
   const items = [
     ...(allOption ? [{ value: ALL_TEAMS, label: 'All teams' }] : []),
-    ...teams.map((t) => ({ value: t._id, label: t.name })),
+    ...sortTeams(teams).map((t) => ({ value: t._id, label: teamLabel(t) })),
   ]
   return (
     <Select

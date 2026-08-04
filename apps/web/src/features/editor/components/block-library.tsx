@@ -142,7 +142,11 @@ export function BlockLibrary({
         <Skeleton className="h-7 w-full rounded-md" />
       ) : profile === null ? (
         <p className="text-muted-foreground text-sm text-pretty">
-          <Link to="/dashboard/settings" className="underline underline-offset-2">
+          <Link
+            to="/dashboard/profile/$section"
+            params={{ section: 'experience' }}
+            className="underline underline-offset-2"
+          >
             Set up your profile
           </Link>{' '}
           to pull in your header, education, and skills.
@@ -211,9 +215,13 @@ export function BlockLibrary({
             profile.skills.length === 0 &&
             (profile.experience ?? []).length === 0 && (
               <p className="text-muted-foreground text-sm text-pretty">
-                Add experience, education, and skills in{' '}
-                <Link to="/dashboard/settings" className="underline underline-offset-2">
-                  Settings
+                Add experience and skills in{' '}
+                <Link
+            to="/dashboard/profile/$section"
+            params={{ section: 'experience' }}
+            className="underline underline-offset-2"
+          >
+                  your profile
                 </Link>
                 .
               </p>

@@ -30,10 +30,8 @@ function usePageTitle(): string {
  */
 export function ShellMobileBar({
   user,
-  onSignOut,
 }: {
   user: ShellUser | null | undefined
-  onSignOut: () => void
 }) {
   const [mobileNav, setMobileNav] = useState(false)
   const title = usePageTitle()
@@ -61,7 +59,7 @@ export function ShellMobileBar({
         <div className="truncate font-medium text-sm">{title}</div>
       </div>
 
-      <ProfileMenu user={user} onSignOut={onSignOut} side="bottom" />
+      <ProfileMenu user={user} side="bottom" />
     </header>
   )
 }

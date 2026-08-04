@@ -1,50 +1,26 @@
 import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { api } from '@folio/backend/api'
-import {
-  AwardIcon,
-  BriefcaseIcon,
-  GraduationCapIcon,
-  KeyIcon,
-  LinkIcon,
-  SparklesIcon,
-  UserIcon,
-  WrenchIcon,
-} from 'lucide-react'
+import { GraduationCapIcon, KeyIcon, LinkIcon, LogOutIcon, UserIcon } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/shared/page-header'
 import { useProfileForm } from '../lib/use-profile-form'
 import { AiKeysCard } from './ai-keys-card'
-import { ImportResumeCard } from './import-resume-card'
-import {
-  AchievementsSection,
-  ContactSection,
-  EducationSection,
-  ExperienceSection,
-  ProfileSection,
-  SkillsSection,
-} from './profile-sections'
+import { SignOutSection } from './sign-out-section'
+import { ContactSection, EducationSection, ProfileSection } from './profile-sections'
 
-type SectionId =
-  | 'profile'
-  | 'contact'
-  | 'experience'
-  | 'skills'
-  | 'education'
-  | 'achievements'
-  | 'import'
-  | 'ai'
+// Settings holds the set-once stuff. The resume content that churns —
+// experience, skills, achievements, import — lives in the sidebar's Profile
+// group at /dashboard/profile; education stays here, it rarely changes.
+type SectionId = 'profile' | 'contact' | 'education' | 'ai' | 'signout'
 
 const NAV: { id: SectionId; label: string; icon: LucideIcon }[] = [
   { id: 'profile', label: 'Profile', icon: UserIcon },
   { id: 'contact', label: 'Contact & links', icon: LinkIcon },
-  { id: 'experience', label: 'Work experience', icon: BriefcaseIcon },
-  { id: 'skills', label: 'Skills', icon: WrenchIcon },
   { id: 'education', label: 'Education', icon: GraduationCapIcon },
-  { id: 'achievements', label: 'Achievements', icon: AwardIcon },
-  { id: 'import', label: 'Import', icon: SparklesIcon },
   { id: 'ai', label: 'AI keys', icon: KeyIcon },
+  { id: 'signout', label: 'Sign out', icon: LogOutIcon },
 ]
 
 export function SettingsScreen() {
@@ -82,25 +58,19 @@ export function SettingsScreen() {
       <div className="flex min-w-0 flex-col">
         {active === 'ai' ? (
           <AiKeysCard />
-        ) : active === 'import' ? (
-          <ImportResumeCard />
+        ) : active === 'signout' ? (
+          <SignOutSection />
         ) : profile === undefined ? (
           <div className="flex flex-col gap-4">
             <Skeleton className="h-16 w-full rounded-lg" />
             <Skeleton className="h-40 w-full rounded-xl" />
           </div>
-        ) : active === 'profile' ? (
-          <ProfileSection form={form} username={profile?.username ?? ''} />
         ) : active === 'contact' ? (
           <ContactSection form={form} />
-        ) : active === 'experience' ? (
-          <ExperienceSection form={form} />
-        ) : active === 'skills' ? (
-          <SkillsSection form={form} />
-        ) : active === 'achievements' ? (
-          <AchievementsSection form={form} media={profile?.media ?? {}} />
+        ) : active === 'education' ? (
+          <EducationSection form={form} media={profile?.media ?? {}} />
         ) : (
-          <EducationSection form={form} />
+          <ProfileSection form={form} username={profile?.username ?? ''} />
         )}
       </div>
       </div>

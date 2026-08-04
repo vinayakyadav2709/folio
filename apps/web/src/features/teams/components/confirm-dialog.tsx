@@ -22,7 +22,9 @@ export function ConfirmDialog({
   confirmLabel,
   onConfirm,
   loading = false,
+  confirmDisabled = false,
   error,
+  children,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -31,7 +33,10 @@ export function ConfirmDialog({
   confirmLabel: string
   onConfirm: () => void
   loading?: boolean
+  confirmDisabled?: boolean
   error?: string | null
+  /** Extra body between the description and the footer, e.g. a confirm input. */
+  children?: React.ReactNode
 }) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -47,6 +52,7 @@ export function ConfirmDialog({
             </div>
           </div>
         </AlertDialogHeader>
+        {children && <div className="px-6">{children}</div>}
         {error && (
           <p className="px-6 text-destructive text-sm">{error}</p>
         )}
@@ -58,6 +64,7 @@ export function ConfirmDialog({
             type="button"
             variant="destructive"
             loading={loading}
+            disabled={confirmDisabled}
             onClick={onConfirm}
           >
             {confirmLabel}

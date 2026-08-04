@@ -21,6 +21,7 @@ body {
 
 @theme inline {
   --animate-skeleton: skeleton 2s -1s infinite linear;
+  --animate-entry: entry-in 0.32s cubic-bezier(0.2, 0, 0, 1) backwards;
   --animate-caret-blink: 1s ease-out infinite caret-blink;
   --animate-toast-success-odd: toast-success-odd 0.32s cubic-bezier(0.5, 1, 0.89, 1);
   --animate-toast-success-even: toast-success-even 0.32s cubic-bezier(0.5, 1, 0.89, 1);
@@ -80,6 +81,13 @@ body {
   @keyframes skeleton {
   to {
     background-position: -200% 0;
+    }
+  }
+  /* Staggered enter for list entries; `backwards` holds frame 0 during the delay. */
+  @keyframes entry-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
     }
   }
   @keyframes caret-blink {

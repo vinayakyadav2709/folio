@@ -37,6 +37,16 @@ function vProviderLit() {
 
 const NO_KEY = 'No AI key configured — add one in Settings'
 
+// The provider's own reason, surfaced instead of swallowed. AiError carries
+// module/method/description; the api key lives in a Redacted header and is
+// never part of it, so this is safe to log and to return to the caller.
+const aiFailed = (e: unknown) => {
+  const err = e as { _tag?: string; description?: string; message?: string }
+  const reason = err?.description ?? err?.message ?? String(e)
+  console.error('[ai] request failed', err?._tag ?? 'unknown', reason)
+  return new Invalid({ message: `AI request failed: ${reason}` })
+}
+
 type LoadedKey = {
   provider: 'anthropic' | 'openai' | 'google'
   encryptedKey: string
@@ -59,7 +69,7 @@ const complete = (
     if (!key) return yield* Effect.fail(new Invalid({ message: NO_KEY }))
     const apiKey = yield* Effect.promise(() => decryptKey(key.encryptedKey))
     return yield* generateText({ provider: key.provider, apiKey, model: key.model, ...opts }).pipe(
-      Effect.mapError(() => new Invalid({ message: 'AI request failed' })),
+      Effect.mapError(aiFailed),
     )
   })
 
@@ -117,7 +127,7 @@ export const rewriteBullet = action({
           contributionBullets: project?.contributionBullets,
         })
         const text = yield* generateText({ provider: key.provider, apiKey, model: key.model, system, prompt }).pipe(
-          Effect.mapError(() => new Invalid({ message: 'AI request failed' })),
+          Effect.mapError(aiFailed),
         )
         return [...(yield* decodeStringArray(text))]
       }),
@@ -136,7 +146,7 @@ export const generateDescription = action({
         const apiKey = yield* Effect.promise(() => decryptKey(key.encryptedKey))
         const { system, prompt } = generateDescriptionPrompt({ name: args.name, notes: args.notes })
         const text = yield* generateText({ provider: key.provider, apiKey, model: key.model, system, prompt }).pipe(
-          Effect.mapError(() => new Invalid({ message: 'AI request failed' })),
+          Effect.mapError(aiFailed),
         )
         return text.trim()
       }),

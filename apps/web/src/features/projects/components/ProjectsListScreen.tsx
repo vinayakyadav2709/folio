@@ -8,9 +8,10 @@ import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/comp
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Spinner } from '@/components/ui/spinner'
 import { PageHeader } from '@/components/shared/page-header'
+import { PublishPill } from '@/components/shared/project-publish'
+import { ALL_TEAMS, TeamPicker } from '@/components/shared/team-picker'
 import { useSelectedTeam } from '../lib/useSelectedTeam'
 import { AvatarStack, hueFrom, initials } from './avatars'
-import { ALL_TEAMS, TeamPicker } from './TeamPicker'
 
 function firstLine(text: string): string {
   return text
@@ -147,7 +148,12 @@ function ProjectGrid({ teamId, compact = false }: { teamId: Id<'teams'>; compact
               </span>
             </div>
             <CardHeader className="gap-1.5">
-              <CardTitle className="font-heading text-base text-balance">{p.name}</CardTitle>
+              <div className="flex items-start justify-between gap-2">
+                <CardTitle className="font-heading text-base text-balance">{p.name}</CardTitle>
+                <span className="mt-0.5 shrink-0">
+                  <PublishPill published={p.published === true} />
+                </span>
+              </div>
               <CardDescription className="line-clamp-2 text-pretty">
                 {preview || 'No description yet'}
               </CardDescription>

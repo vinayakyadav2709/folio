@@ -17,6 +17,20 @@ export function isNoAiKey(err: unknown): boolean {
   return errorMessage(err).toLowerCase().includes('no ai key')
 }
 
+/**
+ * Comparison key for "is this extracted thing the same as that existing thing?".
+ * Slugs are auto-suffixed server-side (`foo`, `foo-2`), so they can never answer
+ * that question — names have to, and names arrive from a model with stray case,
+ * padding and punctuation. Lowercase, strip punctuation, collapse whitespace.
+ */
+export const normalizeKey = (s: string): string =>
+  s
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
 // FileReader gives base64 without blowing the stack on big screenshots;
 // the action wants the raw payload, so the `data:*;base64,` prefix goes.
 export async function fileToBase64(

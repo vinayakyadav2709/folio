@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link as RouterLink, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
-import { Check, Github, Globe, Link2, Pencil, Trash2 } from 'lucide-react'
+import { Github, Globe, Pencil, Trash2 } from 'lucide-react'
 import { api } from '@folio/backend/api'
 import type { Id } from '@folio/backend/dataModel'
 import {
@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { PageHeader } from '@/components/shared/page-header'
+import { PublishToggle, publicProjectPath } from '@/components/shared/project-publish'
 import { errorMessage } from '../lib/convexError'
 import { AiFillZone, type ExtractedProject } from './AiFillZone'
 import { Monogram } from './avatars'
@@ -48,7 +49,6 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
   const [endDate, setEndDate] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
 
   if (project === undefined)
     return (
@@ -121,16 +121,6 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
     } catch (err) {
       setError(errorMessage(err))
     }
-  }
-
-  function copyShareLink() {
-    if (!team?.team.slug || !project?.slug) return
-    navigator.clipboard
-      .writeText(`${window.location.origin}/p/${team.team.slug}/${project.slug}`)
-      .then(() => {
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-      })
   }
 
   return (
@@ -273,15 +263,6 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={copyShareLink}
-                className="transition-[color,background-color,scale] active:scale-[0.96]"
-              >
-                {copied ? <Check className="text-emerald-500" /> : <Link2 />}
-                {copied ? 'Copied!' : 'Share'}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
                 onClick={startEdit}
                 className="active:scale-[0.96]"
               >
@@ -326,6 +307,22 @@ export function ProjectDetailScreen({ projectId }: { projectId: Id<'projects'> }
           />
 
           {error && <p className="text-destructive text-sm">{error}</p>}
+
+          <Card>
+            <CardPanel className="flex flex-col gap-2 py-4">
+              <PublishToggle
+                projectId={projectId}
+                published={project.published === true}
+                path={publicProjectPath(team?.team.slug, project.slug)}
+              />
+              {project.published !== true && (
+                <p className="text-muted-foreground text-sm text-pretty">
+                  Resume-only for now — this project still feeds your resume blocks, it just has no
+                  public page, so there's no link to share yet.
+                </p>
+              )}
+            </CardPanel>
+          </Card>
 
           {(project.demoUrl || project.githubUrl) && (
             <div className="flex flex-wrap gap-2">

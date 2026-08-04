@@ -20,6 +20,7 @@ import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settin
 import { Route as DashboardResumesRouteImport } from './routes/dashboard.resumes'
 import { Route as DashboardProjectsRouteImport } from './routes/dashboard.projects'
 import { Route as DashboardJobsRouteImport } from './routes/dashboard.jobs'
+import { Route as DashboardApplicationsRouteImport } from './routes/dashboard.applications'
 import { Route as DashboardAdminRouteImport } from './routes/dashboard.admin'
 import { Route as UUsernameIndexRouteImport } from './routes/u.$username.index'
 import { Route as DashboardTeamsIndexRouteImport } from './routes/dashboard.teams.index'
@@ -29,6 +30,7 @@ import { Route as DashboardTeamsTeamIdRouteImport } from './routes/dashboard.tea
 import { Route as DashboardResumesResumeIdRouteImport } from './routes/dashboard.resumes.$resumeId'
 import { Route as DashboardProjectsNewRouteImport } from './routes/dashboard.projects.new'
 import { Route as DashboardProjectsProjectIdRouteImport } from './routes/dashboard.projects.$projectId'
+import { Route as DashboardProfileSectionRouteImport } from './routes/dashboard.profile.$section'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as DashboardResumesResumeIdTreeRouteImport } from './routes/dashboard.resumes.$resumeId.tree'
 
@@ -87,6 +89,11 @@ const DashboardJobsRoute = DashboardJobsRouteImport.update({
   path: '/jobs',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardApplicationsRoute = DashboardApplicationsRouteImport.update({
+  id: '/applications',
+  path: '/applications',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardAdminRoute = DashboardAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -134,6 +141,11 @@ const DashboardProjectsProjectIdRoute =
     path: '/$projectId',
     getParentRoute: () => DashboardProjectsRoute,
   } as any)
+const DashboardProfileSectionRoute = DashboardProfileSectionRouteImport.update({
+  id: '/profile/$section',
+  path: '/profile/$section',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -151,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/applications': typeof DashboardApplicationsRoute
   '/dashboard/jobs': typeof DashboardJobsRoute
   '/dashboard/projects': typeof DashboardProjectsRouteWithChildren
   '/dashboard/resumes': typeof DashboardResumesRouteWithChildren
@@ -160,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/u/$username': typeof UUsernameRouteWithChildren
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/dashboard/profile/$section': typeof DashboardProfileSectionRoute
   '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/projects/new': typeof DashboardProjectsNewRoute
   '/dashboard/resumes/$resumeId': typeof DashboardResumesResumeIdRouteWithChildren
@@ -174,6 +188,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/applications': typeof DashboardApplicationsRoute
   '/dashboard/jobs': typeof DashboardJobsRoute
   '/dashboard/projects': typeof DashboardProjectsRouteWithChildren
   '/dashboard/resumes': typeof DashboardResumesRouteWithChildren
@@ -181,6 +196,7 @@ export interface FileRoutesByTo {
   '/team/$slug': typeof TeamSlugRoute
   '/dashboard': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/dashboard/profile/$section': typeof DashboardProfileSectionRoute
   '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/projects/new': typeof DashboardProjectsNewRoute
   '/dashboard/resumes/$resumeId': typeof DashboardResumesResumeIdRouteWithChildren
@@ -197,6 +213,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard/admin': typeof DashboardAdminRoute
+  '/dashboard/applications': typeof DashboardApplicationsRoute
   '/dashboard/jobs': typeof DashboardJobsRoute
   '/dashboard/projects': typeof DashboardProjectsRouteWithChildren
   '/dashboard/resumes': typeof DashboardResumesRouteWithChildren
@@ -206,6 +223,7 @@ export interface FileRoutesById {
   '/u/$username': typeof UUsernameRouteWithChildren
   '/dashboard/': typeof DashboardIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/dashboard/profile/$section': typeof DashboardProfileSectionRoute
   '/dashboard/projects/$projectId': typeof DashboardProjectsProjectIdRoute
   '/dashboard/projects/new': typeof DashboardProjectsNewRoute
   '/dashboard/resumes/$resumeId': typeof DashboardResumesResumeIdRouteWithChildren
@@ -223,6 +241,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/reset-password'
     | '/dashboard/admin'
+    | '/dashboard/applications'
     | '/dashboard/jobs'
     | '/dashboard/projects'
     | '/dashboard/resumes'
@@ -232,6 +251,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/dashboard/'
     | '/api/auth/$'
+    | '/dashboard/profile/$section'
     | '/dashboard/projects/$projectId'
     | '/dashboard/projects/new'
     | '/dashboard/resumes/$resumeId'
@@ -246,6 +266,7 @@ export interface FileRouteTypes {
     | '/'
     | '/reset-password'
     | '/dashboard/admin'
+    | '/dashboard/applications'
     | '/dashboard/jobs'
     | '/dashboard/projects'
     | '/dashboard/resumes'
@@ -253,6 +274,7 @@ export interface FileRouteTypes {
     | '/team/$slug'
     | '/dashboard'
     | '/api/auth/$'
+    | '/dashboard/profile/$section'
     | '/dashboard/projects/$projectId'
     | '/dashboard/projects/new'
     | '/dashboard/resumes/$resumeId'
@@ -268,6 +290,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/reset-password'
     | '/dashboard/admin'
+    | '/dashboard/applications'
     | '/dashboard/jobs'
     | '/dashboard/projects'
     | '/dashboard/resumes'
@@ -277,6 +300,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/dashboard/'
     | '/api/auth/$'
+    | '/dashboard/profile/$section'
     | '/dashboard/projects/$projectId'
     | '/dashboard/projects/new'
     | '/dashboard/resumes/$resumeId'
@@ -377,6 +401,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardJobsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/applications': {
+      id: '/dashboard/applications'
+      path: '/applications'
+      fullPath: '/dashboard/applications'
+      preLoaderRoute: typeof DashboardApplicationsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/admin': {
       id: '/dashboard/admin'
       path: '/admin'
@@ -439,6 +470,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/projects/$projectId'
       preLoaderRoute: typeof DashboardProjectsProjectIdRouteImport
       parentRoute: typeof DashboardProjectsRoute
+    }
+    '/dashboard/profile/$section': {
+      id: '/dashboard/profile/$section'
+      path: '/profile/$section'
+      fullPath: '/dashboard/profile/$section'
+      preLoaderRoute: typeof DashboardProfileSectionRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -511,22 +549,26 @@ const DashboardTeamsRouteWithChildren = DashboardTeamsRoute._addFileChildren(
 
 interface DashboardRouteChildren {
   DashboardAdminRoute: typeof DashboardAdminRoute
+  DashboardApplicationsRoute: typeof DashboardApplicationsRoute
   DashboardJobsRoute: typeof DashboardJobsRoute
   DashboardProjectsRoute: typeof DashboardProjectsRouteWithChildren
   DashboardResumesRoute: typeof DashboardResumesRouteWithChildren
   DashboardSettingsRoute: typeof DashboardSettingsRoute
   DashboardTeamsRoute: typeof DashboardTeamsRouteWithChildren
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardProfileSectionRoute: typeof DashboardProfileSectionRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAdminRoute: DashboardAdminRoute,
+  DashboardApplicationsRoute: DashboardApplicationsRoute,
   DashboardJobsRoute: DashboardJobsRoute,
   DashboardProjectsRoute: DashboardProjectsRouteWithChildren,
   DashboardResumesRoute: DashboardResumesRouteWithChildren,
   DashboardSettingsRoute: DashboardSettingsRoute,
   DashboardTeamsRoute: DashboardTeamsRouteWithChildren,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardProfileSectionRoute: DashboardProfileSectionRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(

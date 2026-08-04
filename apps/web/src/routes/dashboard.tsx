@@ -1,5 +1,6 @@
+import { useEffect } from 'react'
 import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
-import { useQuery } from 'convex/react'
+import { useMutation, useQuery } from 'convex/react'
 import { AuthBoundary } from '@convex-dev/better-auth/react'
 import { api } from '@folio/backend/api'
 import { ShellRail } from '#/components/shared/shell-sidebar'
@@ -35,21 +36,29 @@ function DashboardLayout() {
   )
 }
 
+// Every user gets a personal team, but a query can't write — so the shell
+// creates it once. Gated on listMyTeams having loaded with no personal team in
+// it, so it fires only for a user who doesn't have one yet (and the mutation is
+// idempotent anyway). The subscription is already held by WarmQueries.
+function usePersonalTeam() {
+  const teams = useQuery(api.teams.listMyTeams)
+  const ensurePersonalTeam = useMutation(api.teams.ensurePersonalTeam)
+  const missing = teams !== undefined && !teams.some((t) => t.personal)
+  useEffect(() => {
+    if (missing) void ensurePersonalTeam({})
+  }, [missing, ensurePersonalTeam])
+}
+
 function DashboardShell() {
   const user = useQuery(api.auth.getAuthUser)
-
-  async function signOut() {
-    await authClient.signOut()
-    // expectAuth requires a full reload on sign-out (per @convex-dev/better-auth docs)
-    window.location.href = '/'
-  }
+  usePersonalTeam()
 
   return (
     <div className="flex h-svh bg-background text-foreground">
       <WarmQueries />
-      <ShellRail user={user} onSignOut={signOut} />
+      <ShellRail user={user} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <ShellMobileBar user={user} onSignOut={signOut} />
+        <ShellMobileBar user={user} />
         <main className="min-h-0 flex-1 overflow-y-auto">
           <div className="flex min-h-full w-full flex-col px-6 py-8 lg:px-10">
             <Outlet />

@@ -3,16 +3,20 @@ import { Link } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import {
   AtSignIcon,
+  AwardIcon,
   BriefcaseIcon,
+  Building2Icon,
+  ClipboardListIcon,
   FileTextIcon,
   FolderKanbanIcon,
   LayoutDashboardIcon,
-  LogOutIcon,
   PanelLeftCloseIcon,
   PanelLeftIcon,
   SettingsIcon,
   ShieldIcon,
+  SparklesIcon,
   UsersIcon,
+  WrenchIcon,
 } from 'lucide-react'
 import type { ComponentType } from 'react'
 import { api } from '@folio/backend/api'
@@ -39,28 +43,48 @@ export interface NavItem {
 }
 
 // Rail nav, grouped like the devl.dev workspace-rail: ungrouped primary items
-// first, then labeled sections. Settings is reachable from the profile menu
-// only — it has no rail entry.
+// first, then labeled sections. Account-level destinations live in FOOTER_NAV
+// below, pinned to the bottom rather than in this scrolling flow.
 export const SHELL_NAV_GROUPS: { label?: string; items: NavItem[] }[] = [
   {
     items: [{ to: '/dashboard', label: 'Dashboard', exact: true, Icon: LayoutDashboardIcon }],
   },
   {
+    // The profile pool — the content that feeds every resume, and the stuff
+    // that changes most often, so it lives above the workspace.
+    label: 'Profile',
+    items: [
+      { to: '/dashboard/profile/import', label: 'Import', Icon: SparklesIcon },
+      { to: '/dashboard/profile/experience', label: 'Experience', Icon: Building2Icon },
+      { to: '/dashboard/profile/skills', label: 'Skills', Icon: WrenchIcon },
+      { to: '/dashboard/profile/achievements', label: 'Achievements', Icon: AwardIcon },
+    ],
+  },
+  {
     label: 'Workspace',
     items: [
-      { to: '/dashboard/teams', label: 'Teams', Icon: UsersIcon },
       { to: '/dashboard/projects', label: 'Projects', Icon: FolderKanbanIcon },
       { to: '/dashboard/resumes', label: 'Resumes', Icon: FileTextIcon },
-      { to: '/dashboard/jobs', label: 'Jobs', Icon: BriefcaseIcon },
+    ],
+  },
+  {
+    label: 'Jobs',
+    items: [
+      { to: '/dashboard/jobs', label: 'Job search', Icon: BriefcaseIcon },
+      { to: '/dashboard/applications', label: 'Applications', Icon: ClipboardListIcon },
     ],
   },
 ]
 
-// Flat list for route-title matching (includes non-rail pages like Settings).
-export const SHELL_NAV: NavItem[] = [
-  ...SHELL_NAV_GROUPS.flatMap((g) => g.items),
+// Account-level rather than workspace content, so these are pinned to the rail
+// footer above the profile row instead of sitting in the scrolling tab flow.
+const FOOTER_NAV: NavItem[] = [
+  { to: '/dashboard/teams', label: 'Teams', Icon: UsersIcon },
   { to: '/dashboard/settings', label: 'Settings', Icon: SettingsIcon },
 ]
+
+// Flat list for route-title matching.
+export const SHELL_NAV: NavItem[] = [...SHELL_NAV_GROUPS.flatMap((g) => g.items), ...FOOTER_NAV]
 
 interface ShellUser {
   name?: string | null
@@ -99,13 +123,7 @@ const RAIL_PREF_KEY = 'folio-rail-expanded'
  * state is the mini icon rail with tooltips. Preference persists per device.
  * Hidden below `md`, where {@link ShellMobileBar} takes over.
  */
-export function ShellRail({
-  user,
-  onSignOut,
-}: {
-  user: ShellUser | null | undefined
-  onSignOut: () => void
-}) {
+export function ShellRail({ user }: { user: ShellUser | null | undefined }) {
   const [expanded, setExpanded] = useState(true)
   useEffect(() => {
     const stored = window.localStorage.getItem(RAIL_PREF_KEY)
@@ -199,16 +217,47 @@ export function ShellRail({
         </TooltipProvider>
       )}
 
-      {/* Footer: workspace-rail user row when wide, avatar-only when collapsed. */}
+      {/* Footer: workspace-rail user row when wide, avatar-only when collapsed.
+          Settings reads as the last nav item, so the rule sits between it and
+          the account row — the identity block is what's being set apart. */}
       <div
         className={
-          expanded
-            ? 'border-t border-border/60 px-2 py-2'
-            : 'flex flex-col items-center gap-1 border-t border-border/60 py-2'
+          expanded ? 'px-2 pb-2' : 'flex flex-col items-center gap-1 pb-2'
         }
       >
         {!expanded && <RailToggle expanded={false} onToggle={toggle} />}
-        <ProfileMenu user={user} onSignOut={onSignOut} side="right" expanded={expanded} />
+        {FOOTER_NAV.map((item) =>
+          expanded ? (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={WIDE_ITEM}
+              activeProps={{ className: WIDE_ITEM_ACTIVE }}
+            >
+              <item.Icon className="size-4 opacity-70" />
+              {item.label}
+            </Link>
+          ) : (
+            <Link
+              key={item.to}
+              to={item.to}
+              aria-label={item.label}
+              className={RAIL_ITEM}
+              activeProps={{ className: RAIL_ITEM_ACTIVE }}
+            >
+              <item.Icon className="size-[18px]" />
+            </Link>
+          ),
+        )}
+        <div
+          className={
+            expanded
+              ? 'mt-2 border-border/60 border-t pt-2'
+              : 'mt-1 flex w-full flex-col items-center border-border/60 border-t pt-2'
+          }
+        >
+          <ProfileMenu user={user} side="top" expanded={expanded} />
+        </div>
       </div>
     </aside>
   )
@@ -232,17 +281,16 @@ function RailToggle({ expanded, onToggle }: { expanded: boolean; onToggle: () =>
  * The account menu. Trigger is the full user row (avatar + name + email) when
  * the rail is expanded — the workspace-rail footer — or just the avatar when
  * collapsed / in the mobile bar. Surfaces the signed-in identity, a
- * copy-profile-link action, a Settings link, and Sign out.
+ * copy-profile-link action. Settings and Sign out are rail/settings pages now,
+ * so the menu stays a single-purpose identity surface.
  */
 export function ProfileMenu({
   user,
-  onSignOut,
   side = 'bottom',
   expanded = false,
 }: {
   user: ShellUser | null | undefined
-  onSignOut: () => void
-  side?: 'right' | 'bottom'
+  side?: 'right' | 'bottom' | 'top'
   expanded?: boolean
 }) {
   const profile = useQuery(api.profiles.getMyProfile)
@@ -286,7 +334,16 @@ export function ProfileMenu({
           initial
         )}
       </MenuTrigger>
-      <MenuPopup side={side} align="end" sideOffset={8} className="w-60">
+      {/* The trigger is pinned to the bottom of the rail, so a popup anchored
+          to its end has almost no `--available-height` and the menu clamps —
+          clipping "Sign out" against the border. Opening upward from the
+          trigger gives it the whole rail height instead. */}
+      <MenuPopup
+        side={side}
+        align={side === 'top' ? 'start' : 'end'}
+        sideOffset={8}
+        className="w-60"
+      >
         <div className="px-2 py-1.5">
           <div className="truncate font-medium text-sm">{label}</div>
           {email ? (
@@ -309,21 +366,12 @@ export function ProfileMenu({
             Claim a username
           </MenuItem>
         ) : null}
-        <MenuItem render={<Link to="/dashboard/settings" />}>
-          <SettingsIcon />
-          Settings
-        </MenuItem>
         {isAdmin === true ? (
           <MenuItem render={<Link to="/dashboard/admin" />}>
             <ShieldIcon />
             Admin
           </MenuItem>
         ) : null}
-        <MenuSeparator />
-        <MenuItem variant="destructive" onClick={onSignOut}>
-          <LogOutIcon />
-          Sign out
-        </MenuItem>
       </MenuPopup>
     </Menu>
   )

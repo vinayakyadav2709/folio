@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { useQuery } from 'convex/react'
 import { api } from '@folio/backend/api'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import {
   Empty,
   EmptyContent,
@@ -23,6 +24,7 @@ import {
 import { initials, toneFor } from '../lib/avatar'
 import { CopyLinkButton } from '@/components/shared/copy-link-button'
 import { PageHeader } from '@/components/shared/page-header'
+import { sortTeams } from '@/components/shared/team-picker'
 import { CreateTeamDialog } from './create-team-dialog'
 import { RoleBadge } from './role-badge'
 import { PendingInvites } from './pending-invites'
@@ -77,7 +79,7 @@ export function TeamsList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {teams.map((team) => (
+              {sortTeams(teams).map((team) => (
                 <TableRow key={team._id} className="group cursor-pointer">
                   <TableCell className="ps-4">
                     <div className="flex items-center gap-3">
@@ -93,6 +95,11 @@ export function TeamsList() {
                       >
                         {team.name}
                       </Link>
+                      {team.personal && (
+                        <Badge variant="outline" size="sm">
+                          Personal
+                        </Badge>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-muted-foreground text-xs">

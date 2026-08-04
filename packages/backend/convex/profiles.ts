@@ -12,6 +12,7 @@ const vEducation = v.array(
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
     gpa: v.optional(v.string()),
+    mediaIds: v.optional(v.array(v.id('_storage'))),
   }),
 )
 
@@ -23,6 +24,7 @@ const vExperience = v.array(
     startDate: v.optional(v.string()),
     endDate: v.optional(v.string()),
     bullets: v.array(v.string()),
+    mediaIds: v.optional(v.array(v.id('_storage'))),
   }),
 )
 
@@ -35,7 +37,8 @@ const vAchievements = v.array(
   }),
 )
 
-// Resolved achievement media, keyed by storage id (see model/profiles.ts).
+// Resolved entry media (achievements/education/experience), keyed by storage id
+// (see model/profiles.ts).
 const vMedia = v.record(
   v.id('_storage'),
   v.object({ url: v.string(), contentType: v.optional(v.string()), size: v.number() }),

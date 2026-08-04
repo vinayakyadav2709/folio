@@ -49,3 +49,28 @@ export const backfillPublished = Effect.fn('migrations.backfillPublished')(funct
   yield* Effect.forEach(stale, (p) => Effect.promise(() => ctx.db.patch(p._id, { published: true })))
   return { projects: stale.length }
 })
+
+// One-off: jobs used to point at a single team through `jobs.teamId`; team
+// scope now lives in the `jobTeams` join table. Copies each pointer across and
+// leaves the old field in place (nothing reads it any more). Safe to re-run —
+// skips jobs that already have a row for that team.
+export const backfillJobTeams = Effect.fn('migrations.backfillJobTeams')(function* (
+  ctx: MutationCtx,
+) {
+  const jobs = yield* Effect.promise(() => ctx.db.query('jobs').collect())
+  let inserted = 0
+  for (const job of jobs) {
+    const teamId = job.teamId
+    if (!teamId) continue
+    const existing = yield* Effect.promise(() =>
+      ctx.db
+        .query('jobTeams')
+        .withIndex('by_job', (q) => q.eq('jobId', job._id))
+        .collect(),
+    )
+    if (existing.some((r) => r.teamId === teamId)) continue
+    yield* Effect.promise(() => ctx.db.insert('jobTeams', { jobId: job._id, teamId }))
+    inserted += 1
+  }
+  return { jobTeams: inserted }
+})

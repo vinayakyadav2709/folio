@@ -7,6 +7,7 @@ import type { Id } from '@folio/backend/dataModel'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { CopyLinkButton } from '@/components/shared/copy-link-button'
 import { PageHeader } from '@/components/shared/page-header'
 import { Input } from '@/components/ui/input'
@@ -47,6 +48,9 @@ export function TeamDetail({ teamId }: { teamId: Id<'teams'> }) {
 
   const myId = (me as { _id: string } | null)?._id
   const isAdmin = data.members.some((m) => m.userId === myId && m.role === 'admin')
+  // A personal team is closed: nobody can be invited in, and its owner can't
+  // leave it (the backend refuses either way — this just hides dead controls).
+  const isPersonal = data.team.personal === true
 
   return (
     <div className="flex w-full flex-col gap-10">
@@ -54,15 +58,20 @@ export function TeamDetail({ teamId }: { teamId: Id<'teams'> }) {
 
       <Members teamId={teamId} members={data.members} isAdmin={isAdmin} myId={myId} />
 
-      {isAdmin && (
+      {isAdmin && !isPersonal && (
         <>
           <Separator />
           <TeamInvites teamId={teamId} />
         </>
       )}
 
-      <Separator />
-      <LeaveTeam teamId={teamId} teamName={data.team.name} />
+      {!isPersonal && (
+        <>
+          <Separator />
+          <LeaveTeam teamId={teamId} teamName={data.team.name} />
+          {isAdmin && <DeleteTeam teamId={teamId} teamName={data.team.name} />}
+        </>
+      )}
     </div>
   )
 }
@@ -144,7 +153,14 @@ function TeamHeader({ team, isAdmin }: { team: TeamData['team']; isAdmin: boolea
       }
       meta={
         <>
-          <p className="font-mono text-muted-foreground text-sm">{team.slug}</p>
+          <p className="flex items-center gap-2 font-mono text-muted-foreground text-sm">
+            {team.slug}
+            {team.personal && (
+              <Badge variant="outline" size="sm" className="font-sans">
+                Personal — only you
+              </Badge>
+            )}
+          </p>
           {error && <p className="mt-1 text-destructive text-sm">{error}</p>}
         </>
       }
@@ -359,6 +375,135 @@ function LeaveTeam({ teamId, teamName }: { teamId: Id<'teams'>; teamName: string
         loading={leaving}
         error={error}
       />
+    </section>
+  )
+}
+
+function DeleteTeam({ teamId, teamName }: { teamId: Id<'teams'>; teamName: string }) {
+  const navigate = useNavigate()
+  const deleteTeam = useMutation(api.teams.deleteTeam)
+  const projects = useQuery(api.projects.listTeamProjects, { teamId })
+  const [open, setOpen] = useState(false)
+  const [confirmName, setConfirmName] = useState('')
+  const [alsoProjects, setAlsoProjects] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  // Typing the exact name is the gate — this destroys a shared workspace.
+  const matches = confirmName === teamName
+  const linked = projects ?? []
+  // The server refuses unless the cascade is opted into, so mirror that gate
+  // here: name typed AND, when projects exist, the cascade box ticked.
+  const canDelete = matches && (linked.length === 0 || alsoProjects)
+
+  async function onDelete() {
+    if (!canDelete) return
+    setError(null)
+    setDeleting(true)
+    try {
+      await deleteTeam({ teamId, deleteProjects: alsoProjects })
+      navigate({ to: '/dashboard/teams' })
+    } catch (err) {
+      // Show the server's message verbatim — it says exactly what blocked.
+      setError(errorMessage(err))
+      setDeleting(false)
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-3 rounded-xl border border-destructive/24 bg-destructive/[0.03] p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-heading font-semibold text-sm">Delete team</h2>
+          <p className="text-muted-foreground text-sm">
+            Removes the team and every membership and invite. Its projects can go with it,
+            but only if you say so.
+          </p>
+        </div>
+        <Button variant="destructive" onClick={() => setOpen(true)} disabled={deleting}>
+          <TrashIcon /> Delete team
+        </Button>
+      </div>
+      {error && !open && <p className="text-destructive text-sm">{error}</p>}
+
+      <ConfirmDialog
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next)
+          if (!next) {
+            setError(null)
+            setConfirmName('')
+            setAlsoProjects(false)
+          }
+        }}
+        title="Delete this team?"
+        description={
+          <>
+            <span className="font-medium text-foreground">{teamName}</span> and all of its
+            memberships and pending invites will be deleted for everyone. Team job postings
+            become private to whoever created them. This can't be undone.
+          </>
+        }
+        confirmLabel={deleting ? 'Deleting…' : 'Delete team'}
+        onConfirm={onDelete}
+        loading={deleting}
+        confirmDisabled={!canDelete}
+        error={error}
+      >
+        <div className="flex flex-col gap-4">
+          {linked.length > 0 && (
+            <div className="flex flex-col gap-3 rounded-lg border border-destructive/24 bg-destructive/[0.03] p-3">
+              <div className="flex flex-col gap-1.5">
+                <p className="font-medium text-sm">
+                  {linked.length} {linked.length === 1 ? 'project lives' : 'projects live'}{' '}
+                  in this team
+                </p>
+                <ul className="flex flex-col gap-0.5 text-muted-foreground text-sm">
+                  {linked.slice(0, 5).map((p) => (
+                    <li key={p._id} className="truncate">
+                      {p.name}
+                    </li>
+                  ))}
+                  {linked.length > 5 && (
+                    <li className="text-muted-foreground/72">
+                      and {linked.length - 5} more
+                    </li>
+                  )}
+                </ul>
+              </div>
+              <label className="flex items-start gap-2.5 text-sm">
+                <Checkbox
+                  checked={alsoProjects}
+                  onCheckedChange={setAlsoProjects}
+                  className="mt-0.5"
+                />
+                <span>
+                  Also delete {linked.length === 1 ? 'this project' : `these ${linked.length} projects`}{' '}
+                  and their contributions
+                </span>
+              </label>
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                Existing resume snapshots are not touched — they're immutable and each
+                block keeps its own copy of the title and bullets. Blocks that pointed at
+                these projects just lose the upstream link, so they stop picking up
+                future edits.
+              </p>
+            </div>
+          )}
+
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-muted-foreground">
+              Type <span className="font-medium text-foreground">{teamName}</span> to confirm
+            </span>
+            <Input
+              value={confirmName}
+              autoFocus
+              autoComplete="off"
+              placeholder={teamName}
+              onChange={(e) => setConfirmName(e.target.value)}
+            />
+          </label>
+        </div>
+      </ConfirmDialog>
     </section>
   )
 }

@@ -1,9 +1,19 @@
 import { useRef, useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { useAction, useMutation } from 'convex/react'
-import { FileTextIcon, ImageIcon, Sparkles, UploadIcon, XIcon } from 'lucide-react'
+import { useAction, useMutation, useQuery } from 'convex/react'
+import {
+  CheckIcon,
+  FileTextIcon,
+  GlobeIcon,
+  ImageIcon,
+  LockIcon,
+  Sparkles,
+  UploadIcon,
+  UsersIcon,
+  XIcon,
+} from 'lucide-react'
 import { api } from '@folio/backend/api'
-import type { Doc } from '@folio/backend/dataModel'
+import type { Doc, Id } from '@folio/backend/dataModel'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -17,6 +27,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { errorMessage, fileToBase64, isNoAiKey } from '@/lib/ai-extract'
 
 type Fields = {
@@ -66,6 +77,7 @@ export function JobDialog({
   const createJob = useMutation(api.jobs.createJob)
   const updateJob = useMutation(api.jobs.updateJob)
   const extractJob = useAction(api.ai.extractJob)
+  const teams = useQuery(api.teams.listMyTeams)
   const fileInput = useRef<HTMLInputElement>(null)
 
   const [fields, setFields] = useState<Fields>(() => fieldsOf(job))
@@ -75,6 +87,21 @@ export function JobDialog({
   const [saving, setSaving] = useState(false)
   const [noAiKey, setNoAiKey] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // null = "not touched yet", so the default can follow `teams` as it loads
+  // without an effect writing state back (same trick as ProjectsListScreen).
+  const [visibility, setVisibility] = useState<'global' | 'team' | 'private' | null>(null)
+  const [teamIds, setTeamIds] = useState<string[] | null>(null)
+
+  const hasTeams = teams !== undefined && teams.length > 0
+  // Default is My teams: this board is a team pool, and a posting only helps
+  // the people you'd share it with. Falls back to Just me with no team.
+  const audience = visibility ?? (hasTeams ? 'team' : 'private')
+  // Untouched means literally "my teams" — all of them ticked. Every team here
+  // is one the signed-in user already belongs to, so this shares no wider than
+  // the old single-team default did in spirit, and Save is never dead on open.
+  const activeTeamIds = (teamIds ?? teams?.map((t) => t._id) ?? []).filter((id) =>
+    teams?.some((t) => t._id === id),
+  )
 
   const set = (key: keyof Fields) => (value: string) =>
     setFields((f) => ({ ...f, [key]: value }))
@@ -85,6 +112,8 @@ export function JobDialog({
     setImage(null)
     setError(null)
     setNoAiKey(false)
+    setVisibility(null)
+    setTeamIds(null)
   }
 
   function close(next: boolean) {
@@ -139,7 +168,12 @@ export function JobDialog({
     }
     try {
       if (job) await updateJob({ jobId: job._id, ...payload })
-      else await createJob(payload)
+      else
+        await createJob({
+          ...payload,
+          visibility: audience,
+          teamIds: audience === 'team' ? (activeTeamIds as Id<'teams'>[]) : undefined,
+        })
       close(false)
     } catch (err) {
       setError(errorMessage(err))
@@ -148,7 +182,11 @@ export function JobDialog({
     }
   }
 
-  const canSave = Boolean(fields.company.trim() && fields.role.trim())
+  const canSave = Boolean(
+    fields.company.trim() &&
+      fields.role.trim() &&
+      (job || audience !== 'team' || activeTeamIds.length > 0),
+  )
 
   return (
     <Dialog open={open} onOpenChange={close}>
@@ -308,6 +346,85 @@ export function JobDialog({
               className="min-h-32 resize-y text-sm"
             />
           </div>
+
+          {!job && (
+            <div className="flex flex-col gap-2.5 rounded-xl border bg-foreground/[0.02] p-3">
+              <Label>Who can see this</Label>
+              <ToggleGroup
+                variant="outline"
+                value={[audience]}
+                onValueChange={(next) => {
+                  const picked = next[0]
+                  if (picked) setVisibility(picked as 'global' | 'team' | 'private')
+                }}
+              >
+                <ToggleGroupItem value="global" aria-label="Everyone">
+                  <GlobeIcon /> Everyone
+                </ToggleGroupItem>
+                <ToggleGroupItem value="team" disabled={!hasTeams} aria-label="My teams">
+                  <UsersIcon /> My teams
+                </ToggleGroupItem>
+                <ToggleGroupItem value="private" aria-label="Just me">
+                  <LockIcon /> Just me
+                </ToggleGroupItem>
+              </ToggleGroup>
+
+              {/* Tick-mark toggles, multi-select: a job can be shared with any
+                  number of the teams the signed-in user belongs to. */}
+              {audience === 'team' && teams && teams.length > 0 && (
+                <ToggleGroup
+                  multiple
+                  value={activeTeamIds}
+                  onValueChange={setTeamIds}
+                  aria-label="Teams to share with"
+                  className="flex-wrap gap-1.5"
+                >
+                  {teams.map((team) => (
+                    <ToggleGroupItem
+                      key={team._id}
+                      value={team._id}
+                      variant="outline"
+                      className="rounded-full transition-transform active:scale-[0.96]"
+                    >
+                      {activeTeamIds.includes(team._id) ? (
+                        <CheckIcon className="text-foreground" />
+                      ) : (
+                        <span className="size-3.5 rounded-[4px] border border-input" />
+                      )}
+                      {team.name}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              )}
+              <p className="text-muted-foreground text-xs">
+                {teams === undefined ? (
+                  ' '
+                ) : audience === 'global' ? (
+                  'Anyone signed in can see this posting and flag it expired or broken.'
+                ) : audience === 'private' ? (
+                  'Only you will see this posting.'
+                ) : hasTeams ? (
+                  activeTeamIds.length === 0 ? (
+                    'Pick at least one team — or share it with everyone instead.'
+                  ) : (
+                    `Everyone on ${
+                      activeTeamIds.length === 1
+                        ? (teams.find((t) => t._id === activeTeamIds[0])?.name ?? 'the team')
+                        : `${activeTeamIds.length} teams`
+                    } sees this posting and can flag it expired or broken.`
+                  )
+                ) : (
+                  <>
+                    You're not on a team yet, so this stays private.{' '}
+                    <Link to="/dashboard/teams" className="underline underline-offset-4">
+                      Create a team
+                    </Link>{' '}
+                    to share postings.
+                  </>
+                )}
+              </p>
+            </div>
+          )}
 
           {error && <p className="text-destructive text-sm">{error}</p>}
         </DialogPanel>

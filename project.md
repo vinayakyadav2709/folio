@@ -71,10 +71,15 @@ documents:
 | Team skill matrix | Auto-derived from members' blocks, on group portfolio page |
 | Review/comments | Teammates comment on resume drafts before sending |
 
+### Reversed (both were rejected, both are now built — 2026-08-04)
+
+| Feature | Notes |
+|---------|-------|
+| Resume import | Paste or upload a PDF / image / Markdown / LaTeX resume → AI extracts identity, links, skills, education, experience, achievements and projects → per-item review that matches against what already exists (update / add / skip) rather than duplicating. Every apply is recorded in `imports` so you can see what came from which file. |
+| Job scoping + application tracking | Jobs are no longer one global pool: on create you choose team-shared or private. A lifecycle tab tracks jobs you've applied to with 3 manual statuses — applied / in progress / rejected. Email polling to update status automatically is the intended next step. |
+
 ### Explicitly rejected
 
-- Application tracker (beyond the "sent" tag) — not building Huntr
-- Resume import/parsing from PDF/LinkedIn — users create fresh; maybe much later
 - Multiple templates at launch — 2 excellent ATS-safe themes only
 - Merge between branches — cherry-pick only
 - Confect — community one-maintainer layer between us and the DB; Convex

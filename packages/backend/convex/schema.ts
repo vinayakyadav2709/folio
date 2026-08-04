@@ -29,10 +29,30 @@ export const vTheme = v.object({
   fontScale: v.optional(v.number()),
 })
 
+/** One thing the resume importer actually wrote, as recorded on an import run. */
+export const vImportItem = v.object({
+  section: v.union(
+    v.literal('identity'),
+    v.literal('links'),
+    v.literal('skills'),
+    v.literal('education'),
+    v.literal('experience'),
+    v.literal('achievements'),
+    v.literal('projects'),
+  ),
+  key: v.string(), // normalized match key, or the scalar field name
+  label: v.string(), // human label for the history list
+  action: v.union(v.literal('create'), v.literal('update')),
+})
+
 export default defineSchema({
   teams: defineTable({
     name: v.string(),
     slug: v.string(),
+    // A personal team has exactly one member (its creator) and is closed to
+    // invites — it is the private default home for unshared work. Optional
+    // because rows predate the field; unset/false = a normal shared team.
+    personal: v.optional(v.boolean()),
   }).index('by_slug', ['slug']),
 
   memberships: defineTable({
@@ -106,6 +126,7 @@ export default defineSchema({
     linkedinUrl: v.optional(v.string()),
     websiteUrl: v.optional(v.string()),
     skills: v.array(v.object({ category: v.string(), items: v.array(v.string()) })),
+    // `mediaIds` are diplomas/transcripts — optional so pre-media rows stay valid.
     education: v.array(
       v.object({
         school: v.string(),
@@ -114,9 +135,11 @@ export default defineSchema({
         startDate: v.optional(v.string()),
         endDate: v.optional(v.string()),
         gpa: v.optional(v.string()),
+        mediaIds: v.optional(v.array(v.id('_storage'))),
       }),
     ),
     // optional: rows predate the field. Experience blocks pull from here.
+    // `mediaIds` are offer letters/screenshots — optional, same as education.
     experience: v.optional(
       v.array(
         v.object({
@@ -126,6 +149,7 @@ export default defineSchema({
           startDate: v.optional(v.string()),
           endDate: v.optional(v.string()),
           bullets: v.array(v.string()),
+          mediaIds: v.optional(v.array(v.id('_storage'))),
         }),
       ),
     ),
@@ -190,8 +214,12 @@ export default defineSchema({
     .index('by_branch', ['branchId'])
     .index('by_parent', ['parentId']),
 
-  // Shared job-posting pool: visible to every signed-in user across the app.
-  // `description` is the full JD text (pasted or AI-extracted from a screenshot).
+  // Job-posting pool. `description` is the full JD text (pasted or
+  // AI-extracted from a screenshot).
+  // `visibility` is chosen at create time: 'private' = creator only,
+  // 'team' = members of any team in `jobTeams`, 'global' = every signed-in
+  // user. UNSET = a legacy row from when jobs were one global pool — those
+  // mean exactly 'global' and are never backfilled or hidden.
   jobs: defineTable({
     createdBy: v.string(), // Better Auth user id
     company: v.string(),
@@ -200,7 +228,65 @@ export default defineSchema({
     url: v.optional(v.string()),
     salary: v.optional(v.string()),
     description: v.string(),
-  }),
+    visibility: v.optional(
+      v.union(v.literal('global'), v.literal('team'), v.literal('private')),
+    ),
+    // LEGACY, write-only until migrated: the single team a 'team' job used to
+    // point at. Superseded by the `jobTeams` join table — nothing reads it
+    // except `migrations:backfillJobTeams`, which copies it across.
+    teamId: v.optional(v.id('teams')),
+    // Shared posting state — anyone who can SEE the job may change it, so a
+    // dead link gets flagged by whoever hits it. UNSET MEANS 'live': existing
+    // rows are not backfilled and are never hidden. 'expired' = posting closed,
+    // 'broken' = the apply link is dead.
+    status: v.optional(
+      v.union(v.literal('live'), v.literal('expired'), v.literal('broken')),
+    ),
+  })
+    // listJobs is a union of index scans, one per visibility bucket:
+    // global = eq(visibility,'global') plus eq(visibility, undefined) for the
+    // legacy rows; private = eq(visibility,'private').eq(createdBy, me);
+    // team = jobTeams.by_team for each team I'm in.
+    .index('by_visibility_creator', ['visibility', 'createdBy']),
+
+  // Which teams a 'team'-visibility job is shared with. A join table rather
+  // than an array field on `jobs` because Convex indexes cannot do array
+  // containment — scan-then-filter would silently drop visible jobs once the
+  // pool outgrows listJobs' take() cap.
+  jobTeams: defineTable({
+    jobId: v.id('jobs'),
+    teamId: v.id('teams'),
+  })
+    .index('by_job', ['jobId'])
+    .index('by_team', ['teamId']),
+
+  // Application lifecycle. Per-USER state on a SHARED job row, so it lives in
+  // its own join table rather than as a field on `jobs`.
+  applications: defineTable({
+    userId: v.string(), // Better Auth user id
+    jobId: v.id('jobs'),
+    status: v.union(
+      v.literal('applied'),
+      v.literal('in_progress'),
+      v.literal('rejected'),
+      v.literal('not_eligible'),
+    ),
+    at: v.number(), // Date.now() when the status last changed
+    note: v.optional(v.string()),
+  })
+    .index('by_user', ['userId'])
+    .index('by_user_job', ['userId', 'jobId']),
+
+  // Provenance for the resume importer: one row per import RUN, listing only
+  // what was actually applied. Nothing is stamped onto the profile/project
+  // rows themselves — `key` is the normalized match key (or the scalar field
+  // name), so per-entry attribution can be derived later without a migration.
+  imports: defineTable({
+    userId: v.string(), // Better Auth user id
+    at: v.number(), // Date.now() at apply time
+    source: v.string(), // filename, or 'Pasted text'
+    applied: v.array(vImportItem),
+  }).index('by_user', ['userId']),
 
   // BYOK: encrypted at rest, decrypted only inside actions, never logged.
   aiKeys: defineTable({

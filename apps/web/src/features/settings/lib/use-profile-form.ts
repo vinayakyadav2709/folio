@@ -7,6 +7,8 @@ import { errorMessage } from './errors'
 // Skills/education are edited as flat local rows; items are a comma-separated
 // string in the UI and split on save (the shape the ATS template wants).
 export type SkillRow = { category: string; itemsText: string }
+// `mediaIds` (here and on experience/achievements) are storage ids only; the
+// resolved urls/sizes come from the profile query's `media` map.
 export type EducationRow = {
   school: string
   degree: string
@@ -14,6 +16,7 @@ export type EducationRow = {
   startDate: string
   endDate: string
   gpa: string
+  mediaIds: Id<'_storage'>[]
 }
 
 // Bullets are one-per-line in a textarea, split on save.
@@ -24,6 +27,7 @@ export type ExperienceRow = {
   startDate: string
   endDate: string
   bulletsText: string
+  mediaIds: Id<'_storage'>[]
 }
 
 export const EMPTY_EDU: EducationRow = {
@@ -33,6 +37,7 @@ export const EMPTY_EDU: EducationRow = {
   startDate: '',
   endDate: '',
   gpa: '',
+  mediaIds: [],
 }
 
 // Awards, certifications, publications. `mediaIds` are certificates/photos
@@ -47,7 +52,7 @@ export type AchievementRow = {
 
 export const EMPTY_ACH: AchievementRow = { title: '', description: '', date: '', mediaIds: [] }
 
-// Resolved achievement media from `api.profiles.getMyProfile`, keyed by storage id.
+// Resolved entry media from `api.profiles.getMyProfile`, keyed by storage id.
 export type MediaMap = Record<string, { url: string; contentType?: string; size: number }>
 
 export const EMPTY_EXP: ExperienceRow = {
@@ -57,6 +62,7 @@ export const EMPTY_EXP: ExperienceRow = {
   startDate: '',
   endDate: '',
   bulletsText: '',
+  mediaIds: [],
 }
 
 type ProfileFields = {
@@ -119,6 +125,7 @@ const serializeEducation = (education: EducationRow[]) =>
       startDate: trimmed(e.startDate),
       endDate: trimmed(e.endDate),
       gpa: trimmed(e.gpa),
+      mediaIds: e.mediaIds,
     }))
     .filter((e) => e.school)
 
@@ -134,6 +141,7 @@ const serializeExperience = (experience: ExperienceRow[]) =>
         .split('\n')
         .map((b) => b.trim())
         .filter(Boolean),
+      mediaIds: x.mediaIds,
     }))
     .filter((x) => x.company)
 
@@ -171,6 +179,7 @@ const toFields = (profile: Doc<'profiles'> | null | undefined): ProfileFields =>
     startDate: e.startDate ?? '',
     endDate: e.endDate ?? '',
     gpa: e.gpa ?? '',
+    mediaIds: e.mediaIds ?? [],
   })),
   experience: (profile?.experience ?? []).map((x) => ({
     company: x.company,
@@ -179,6 +188,7 @@ const toFields = (profile: Doc<'profiles'> | null | undefined): ProfileFields =>
     startDate: x.startDate ?? '',
     endDate: x.endDate ?? '',
     bulletsText: x.bullets.join('\n'),
+    mediaIds: x.mediaIds ?? [],
   })),
   achievements: (profile?.achievements ?? []).map((a) => ({
     title: a.title,
