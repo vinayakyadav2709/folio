@@ -43,7 +43,7 @@ export function TimelineGraph({ entries, active, onHover, onPick }: Props) {
       if (i < 0) i = laneEnds.length
       laneEnds[i] = end(r)
       const live = ONGOING.test(r.to ?? '')
-      return { keys: [r.key], x: SPINE + LANE * (i + 1), y0: Y(s), y1: Y(end(r)), live }
+      return { keys: [r.key], x: SPINE + LANE * (i + 1), y0: Y(s), y1: Y(end(r)), live, work: r.group === 'Work' }
     })
   const W = SPINE + LANE * (laneEnds.length + 1)
 
@@ -90,7 +90,7 @@ export function TimelineGraph({ entries, active, onHover, onPick }: Props) {
 
       <svg width={W} height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
         <path className="pf-draw pf-spine" pathLength={1} d={`M${SPINE} ${H} V0`} />
-        {lanes.map(({ keys, x, y0, y1, live }, i) => {
+        {lanes.map(({ keys, x, y0, y1, live, work }, i) => {
           const k = Math.min(14, (y0 - y1) / 3)
           const d = `M${SPINE} ${y0} Q${x} ${y0} ${x} ${y0 - k} V${y1 + (live ? 0 : k)}${
             live ? '' : ` Q${x} ${y1} ${SPINE} ${y1}`
@@ -101,6 +101,7 @@ export function TimelineGraph({ entries, active, onHover, onPick }: Props) {
                 className="pf-draw"
                 pathLength={1}
                 data-live={live || undefined}
+                data-work={work || undefined}
                 d={d}
                 style={{ animationDelay: `${250 + i * 120}ms` }}
               />
