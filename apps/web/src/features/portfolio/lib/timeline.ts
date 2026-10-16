@@ -3,12 +3,12 @@ import type { api } from '@folio/backend/api'
 
 export type Profile = FunctionReturnType<typeof api.profiles.getPublicProfile>
 
-// One row of the public page (experience, projects, awards, education).
+// One row of the public page (experience, projects, achievements, education).
 export type Entry = {
   key: string
   name: string
   kind: string
-  group: 'Work' | 'Projects' | 'Awards' | 'Education'
+  group: 'Work' | 'Projects' | 'Achievements' | 'Education'
   from?: string | null
   to?: string | null
   project?: { teamSlug: string; slug: string }
@@ -67,7 +67,7 @@ export function timeline(d: Profile): Entry[] {
         key: `a${i}`,
         name: event,
         kind: rank,
-        group: 'Awards' as const,
+        group: 'Achievements' as const,
         to: a.date,
         detail: [[a.title, a.description].filter(Boolean).join(' — ')],
       }
