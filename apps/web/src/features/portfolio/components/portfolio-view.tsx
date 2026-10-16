@@ -5,7 +5,7 @@ import { span, timeline } from '../lib/timeline'
 import type { Entry, Profile } from '../lib/timeline'
 import { TimelineGraph } from './timeline-graph'
 
-const GROUPS = ['Work', 'Projects', 'Awards', 'Education'] as const
+const GROUPS = ['Work', 'Projects', 'Achievements', 'Education'] as const
 
 // p.cv-style public page. Styling lives in styles.css under `.pf`.
 export function PortfolioView({ data }: { data: Profile }) {
@@ -18,9 +18,9 @@ export function PortfolioView({ data }: { data: Profile }) {
   const toggle = (key: string, v?: boolean) => setOpen((o) => ({ ...o, [key]: v ?? !o[key] }))
   const [active, setActive] = useState<string[]>([])
 
-  // Two-way hover link with the graph (awards aren't on it).
+  // Two-way hover link with the graph (achievements aren't on it).
   const link = (r: Entry) =>
-    r.group === 'Awards'
+    r.group === 'Achievements'
       ? {}
       : {
           id: `pf-${r.key}`,

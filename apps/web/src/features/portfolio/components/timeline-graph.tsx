@@ -3,7 +3,7 @@ import type { Entry } from '../lib/timeline'
 
 // Time-proportional vertical timeline, newest at top. Work + education are thin
 // lanes branching off one spine; projects are dots on the spine at their start
-// (same-month projects merge into one dot). Awards stay off the graph.
+// (same-month projects merge into one dot). Achievements stay off the graph.
 // Lines are SVG in a 1000-unit tall viewBox stretched to the column; dots and
 // labels are HTML so they don't distort.
 
@@ -21,7 +21,7 @@ type Props = {
 export function TimelineGraph({ entries, active, onHover, onPick }: Props) {
   const d = new Date()
   const now = d.getFullYear() * 12 + d.getMonth()
-  const shown = entries.filter((r) => r.group !== 'Awards' && startOf(r) !== null)
+  const shown = entries.filter((r) => r.group !== 'Achievements' && startOf(r) !== null)
   if (shown.length === 0) return null
   const end = (r: Entry) => {
     const t = when(r.to)
