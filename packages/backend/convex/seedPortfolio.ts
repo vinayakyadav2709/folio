@@ -176,6 +176,71 @@ export const addProject = internalMutation({
     }),
 })
 
+// One-shot prod load: replace profile sections, patch + publish pool projects,
+// and create a resume (init commit on main, optionally published). One transaction.
+export const seedProd = internalMutation({
+  args: {
+    userId: v.string(),
+    profile: v.object({
+      headline: v.string(),
+      skills: profileFields.skills,
+      experience: v.array(profileFields.experience.element),
+      achievements: v.array(profileFields.achievements.element),
+      education: profileFields.education,
+    }),
+    patches: v.array(
+      v.object({
+        id: v.id('projects'),
+        subtitle: v.optional(v.string()),
+        brief: v.optional(v.string()),
+        description: v.optional(v.string()),
+        githubUrl: v.optional(v.string()),
+        startDate: v.optional(v.string()),
+        endDate: v.optional(v.string()),
+      }),
+    ),
+    publish: v.array(v.id('projects')),
+    resume: v.object({
+      name: v.string(),
+      message: v.string(),
+      themeId: v.string(),
+      header: schema.tables.snapshots.validator.fields.header,
+      blocks: v.array(vBlock),
+      publish: v.boolean(),
+    }),
+  },
+  returns: v.id('resumes'),
+  handler: async (ctx, { userId, profile, patches, publish, resume }) => {
+    const existing = await ctx.db
+      .query('profiles')
+      .withIndex('by_user', (q) => q.eq('userId', userId))
+      .unique()
+    if (!existing) throw new Error('profile not found')
+    await ctx.db.patch('profiles', existing._id, profile)
+
+    for (const { id, ...fields } of patches) await ctx.db.patch('projects', id, { ...fields, updatedAt: Date.now() })
+    for (const id of publish) {
+      const p = await ctx.db.get('projects', id)
+      if (!p || p.ownerId !== userId || !p.slug) throw new Error(`cannot publish ${id}`)
+      await ctx.db.patch('projects', id, { published: true })
+    }
+
+    const resumeId = await ctx.db.insert('resumes', { userId, name: resume.name, slug: slugify(resume.name) })
+    const branchId = await ctx.db.insert('branches', { resumeId, name: 'main', color: '#6366f1' })
+    const snapshotId = await ctx.db.insert('snapshots', {
+      resumeId,
+      branchId,
+      message: resume.message,
+      blocks: resume.blocks,
+      theme: { id: resume.themeId },
+      header: resume.header,
+    })
+    await ctx.db.patch('branches', branchId, { headSnapshotId: snapshotId })
+    if (resume.publish) await ctx.db.patch('resumes', resumeId, { publishedSnapshotId: snapshotId })
+    return resumeId
+  },
+})
+
 // Set a pool project's dates.
 export const setProjectDates = internalMutation({
   args: { projectId: v.id('projects'), startDate: v.optional(v.string()), endDate: v.optional(v.string()) },
