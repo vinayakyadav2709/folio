@@ -6,6 +6,7 @@
 //
 // Prompts for email + password; they are sent only to SITE's sign-in endpoint
 // and never stored. A task default-exports `async ({ client, api }) => …`.
+import path from 'node:path'
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '../convex/_generated/api'
 
@@ -14,7 +15,7 @@ const CONVEX_URL = process.env.CONVEX_URL ?? 'https://giddy-dogfish-683.convex.c
 
 const taskPath = process.argv[2]
 if (!taskPath) throw new Error('usage: bun scripts/as-me.ts <task.ts>')
-const task = (await import(Bun.pathToFileURL(Bun.resolveSync(taskPath, process.cwd())).href)).default
+const task = (await import(Bun.pathToFileURL(path.resolve(taskPath)).href)).default
 
 // Read a line without echoing it (for the password).
 function readHidden(question: string): Promise<string> {
