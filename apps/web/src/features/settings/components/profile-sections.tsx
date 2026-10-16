@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation } from 'convex/react'
 import { api } from '@folio/backend/api'
 import { AtSignIcon, CheckIcon, GraduationCapIcon } from 'lucide-react'
+import { arrayMove } from '@dnd-kit/sortable'
 import { Button } from '@/components/ui/button'
 import { CopyLinkButton } from '@/components/shared/copy-link-button'
 import { Input } from '@/components/ui/input'
@@ -199,6 +200,8 @@ export function EducationSection({ form, media }: { form: ProfileForm; media: Me
                 key={i}
                 index={i}
                 removeLabel="Remove education entry"
+              total={rows.length}
+              onMove={(to) => setEducation((all) => arrayMove(all, i, to))}
                 onRemove={() => setEducation((all) => all.filter((_, idx) => idx !== i))}
                 rail={
                   <>

@@ -20,11 +20,12 @@ import { Menu, MenuItem, MenuPopup, MenuTrigger } from '@/components/ui/menu'
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { Block, Header, Theme } from '../lib/blocks'
 import { errorMessage } from '../lib/errors'
+import { useMoreProjects } from '../lib/use-more-projects'
 
 type Kind = 'pdf' | 'latex'
 
 // ATS-first: the Jake's-Resume layout is the default download.
-const THEME_IDS = ['ats', 'classic', 'compact'] as const
+const THEME_IDS = ['ats', 'classic', 'compact', 'latex'] as const
 
 type Props = {
   blocks: Block[]
@@ -38,6 +39,7 @@ type Props = {
 // committed head snapshot. Everything PDF-related is dynamically imported so
 // @react-pdf/renderer never loads during SSR.
 export function ExportMenu({ blocks, header, theme, snapshotId, fileName }: Props) {
+  const moreProjects = useMoreProjects(blocks)
   const tagSent = useMutation(api.snapshots.tagSent)
   const [kind, setKind] = useState<Kind | null>(null)
   const [themeId, setThemeId] = useState<string>('ats')
@@ -50,7 +52,7 @@ export function ExportMenu({ blocks, header, theme, snapshotId, fileName }: Prop
     setBusy(true)
     setError(null)
     try {
-      const snapshot = { blocks, header, theme: { ...theme, id: themeId } }
+      const snapshot = { blocks, header, theme: { ...theme, id: themeId }, moreProjects }
       const exports = await import('@folio/exports')
       if (kind === 'latex') {
         download(
@@ -117,7 +119,7 @@ export function ExportMenu({ blocks, header, theme, snapshotId, fileName }: Prop
                 <SelectPopup>
                   {THEME_IDS.map((id) => (
                     <SelectItem key={id} value={id} className="capitalize">
-                      {id === 'ats' ? 'ATS (Jake’s Resume)' : id}
+                      {id === 'ats' ? 'ATS (Jake’s Resume)' : id === 'latex' ? 'LaTeX' : id}
                     </SelectItem>
                   ))}
                 </SelectPopup>

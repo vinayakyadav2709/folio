@@ -32,4 +32,7 @@ export type ResumeSnapshot = {
   blocks: ResumeBlock[]
   theme: ResumeTheme
   header: ResumeHeader
+  // render-time only (not stored): published projects not on this resume,
+  // shown as "7 more projects on my portfolio"
+  moreProjects?: number
 }

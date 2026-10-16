@@ -118,6 +118,23 @@ export const getPublicProfile = query({
     websiteUrl: nullableString,
     skills: vSkills,
     education: vEducation,
+    experience: v.array(
+      v.object({
+        company: v.string(),
+        role: v.optional(v.string()),
+        location: v.optional(v.string()),
+        startDate: v.optional(v.string()),
+        endDate: v.optional(v.string()),
+        bullets: v.array(v.string()),
+      }),
+    ),
+    achievements: v.array(
+      v.object({
+        title: v.string(),
+        description: v.optional(v.string()),
+        date: v.optional(v.string()),
+      }),
+    ),
     resumes: v.array(v.object({ name: v.string(), slug: v.string() })),
     projects: v.array(
       v.object({
@@ -128,6 +145,8 @@ export const getPublicProfile = query({
         teamSlug: v.string(),
         demoUrl: nullableString,
         githubUrl: nullableString,
+        startDate: nullableString,
+        endDate: nullableString,
       }),
     ),
   }),

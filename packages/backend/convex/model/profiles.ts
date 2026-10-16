@@ -167,16 +167,26 @@ export const getPublicProfile = Effect.fn('profiles.getPublicProfile')(function*
     .filter((r): r is typeof r & { slug: string } => !!r.publishedSnapshotId && !!r.slug)
     .map((r) => ({ name: r.name, slug: r.slug }))
 
-  const contribs = yield* Effect.promise(() =>
-    ctx.db
-      .query('contributions')
-      .withIndex('by_user', (q) => q.eq('userId', profile.userId))
-      .collect(),
-  )
+  // Projects this person owns or contributed to — deduped, published only.
+  const [contribs, owned] = yield* Effect.all([
+    Effect.promise(() =>
+      ctx.db
+        .query('contributions')
+        .withIndex('by_user', (q) => q.eq('userId', profile.userId))
+        .collect(),
+    ),
+    Effect.promise(() =>
+      ctx.db
+        .query('projects')
+        .withIndex('by_owner', (q) => q.eq('ownerId', profile.userId))
+        .collect(),
+    ),
+  ])
+  const projectIds = [...new Set([...owned.map((p) => p._id), ...contribs.map((c) => c.projectId)])]
   const maybeProjects = yield* Effect.forEach(
-    contribs,
-    (c) =>
-      Effect.promise(() => ctx.db.get('projects', c.projectId)).pipe(
+    projectIds,
+    (id) =>
+      Effect.promise(() => ctx.db.get('projects', id)).pipe(
         Effect.flatMap((p) =>
           p && p.slug && p.published === true
             ? Effect.promise(() => ctx.db.get('teams', p.teamId)).pipe(
@@ -190,6 +200,8 @@ export const getPublicProfile = Effect.fn('profiles.getPublicProfile')(function*
                         teamSlug: team.slug,
                         demoUrl: p.demoUrl ?? null,
                         githubUrl: p.githubUrl ?? null,
+                        startDate: p.startDate ?? null,
+                        endDate: p.endDate ?? null,
                       }
                     : null,
                 ),
@@ -213,6 +225,9 @@ export const getPublicProfile = Effect.fn('profiles.getPublicProfile')(function*
     websiteUrl: profile.websiteUrl ?? null,
     skills: profile.skills,
     education: profile.education,
+    // attached media (offer letters etc.) stays private
+    experience: (profile.experience ?? []).map(({ mediaIds: _, ...x }) => x),
+    achievements: (profile.achievements ?? []).map(({ mediaIds: _, ...a }) => a),
     resumes: publishedResumes,
     projects,
   }

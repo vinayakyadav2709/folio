@@ -111,8 +111,10 @@ export function newSkillsBlock(skills: ProfileSkill[]): Block {
   }
 }
 
-// Header prefilled from profile identity + the three social URLs.
+// Header prefilled from profile identity + the social URLs + the public
+// portfolio page (exports repeat the "Portfolio" link under Projects).
 export function headerFromProfile(profile: {
+  username?: string
   fullName?: string
   headline?: string
   email?: string
@@ -123,6 +125,7 @@ export function headerFromProfile(profile: {
   websiteUrl?: string
 }): Header {
   const links = [
+    profile.username && { label: 'Portfolio', url: `${window.location.origin}/u/${profile.username}` },
     profile.githubUrl && { label: 'GitHub', url: profile.githubUrl },
     profile.linkedinUrl && { label: 'LinkedIn', url: profile.linkedinUrl },
     profile.websiteUrl && { label: 'Website', url: profile.websiteUrl },
