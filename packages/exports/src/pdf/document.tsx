@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, Link, StyleSheet } from '@react-pdf/renderer'
 import type { ResumeSnapshot } from '../types'
 import { groupSections } from '../sections'
+import { displayUrl, moreProjects, portfolioLink } from '../latex-look'
 
 // Shared, ATS-safe resume document: single column, standard section headers,
 // built-in fonts (no font registration), real text throughout, hyperlinks via
@@ -65,6 +66,7 @@ export function ResumeDocument({ snapshot, variant }: { snapshot: ResumeSnapshot
 
   const contactBits = [header.location, header.email, header.phone].filter(Boolean) as string[]
   const sections = groupSections(blocks)
+  const more = portfolioLink(header.links)
 
   return (
     <Document>
@@ -121,6 +123,14 @@ export function ResumeDocument({ snapshot, variant }: { snapshot: ResumeSnapshot
                 ) : null}
               </View>
             ))}
+            {section.type === 'project' && more ? (
+              <Text style={{ marginTop: variant.blockGap, textAlign: 'right' }}>
+                {`${moreProjects(snapshot.moreProjects)} `}
+                <Link src={more.url} style={styles.link}>
+                  {displayUrl(more.url)}
+                </Link>
+              </Text>
+            ) : null}
           </View>
         ))}
       </Page>

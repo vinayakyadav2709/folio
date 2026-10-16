@@ -24,7 +24,7 @@ export const vBlock = v.object({
 })
 
 export const vTheme = v.object({
-  id: v.string(), // 'classic' | 'compact' — the 2 ATS-safe themes
+  id: v.string(), // 'ats' | 'classic' | 'compact' | 'latex' — all ATS-safe (real text)
   accentColor: v.optional(v.string()),
   fontScale: v.optional(v.number()),
 })
@@ -98,7 +98,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index('by_team', ['teamId'])
-    .index('by_team_slug', ['teamId', 'slug']),
+    .index('by_team_slug', ['teamId', 'slug'])
+    .index('by_owner', ['ownerId']),
 
   // Per-member roles on a shared project: shared facts, personal claims.
   contributions: defineTable({

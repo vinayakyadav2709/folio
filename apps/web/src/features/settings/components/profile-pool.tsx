@@ -1,6 +1,7 @@
 import { AwardIcon, BriefcaseIcon, LayersIcon, PlusIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Badge } from '@/components/ui/badge'
+import { arrayMove } from '@dnd-kit/sortable'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -85,6 +86,8 @@ export function ExperiencePage({ form, media }: { form: ProfileForm; media: Medi
               key={i}
               index={i}
               removeLabel="Remove experience entry"
+              total={rows.length}
+              onMove={(to) => setExperience((all) => arrayMove(all, i, to))}
               onRemove={() => setExperience((all) => all.filter((_, idx) => idx !== i))}
               rail={
                 <>
@@ -277,6 +280,8 @@ export function AchievementsPage({ form, media }: { form: ProfileForm; media: Me
               key={i}
               index={i}
               removeLabel="Remove achievement entry"
+              total={rows.length}
+              onMove={(to) => setAchievements((all) => arrayMove(all, i, to))}
               onRemove={() => setAchievements((all) => all.filter((_, idx) => idx !== i))}
               rail={
                 <MicroField label="Date">

@@ -190,8 +190,8 @@ export function SidePanel({
       <Separator className="my-1" />
       <SectionLabel>Theme</SectionLabel>
       <div className="flex items-center gap-2">
-        <div className="grid flex-1 grid-cols-3 gap-0.5 rounded-lg border border-border/60 bg-foreground/[0.02] p-0.5">
-          {(['ats', 'classic', 'compact'] as const).map((id) => (
+        <div className="grid flex-1 grid-cols-4 gap-0.5 rounded-lg border border-border/60 bg-foreground/[0.02] p-0.5">
+          {(['ats', 'classic', 'compact', 'latex'] as const).map((id) => (
             <button
               key={id}
               type="button"
@@ -203,7 +203,7 @@ export function SidePanel({
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              {id}
+              {id === 'latex' ? 'LaTeX' : id}
             </button>
           ))}
         </div>

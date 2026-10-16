@@ -116,6 +116,90 @@ test('empty sections are skipped', () => {
   expect(tex).not.toContain('\\section{Projects}')
 })
 
+test("theme 'latex' emits the user's own template", () => {
+  const tex = snapshotToLatex({
+    header: {
+      fullName: 'Vinayak Yadav',
+      email: 'v@x.io',
+      phone: '+91 83038 07051',
+      location: 'Mumbai, India',
+      links: [
+        { label: 'LinkedIn', url: 'https://www.linkedin.com/in/v/' },
+        { label: 'GitHub', url: 'https://github.com/v' },
+      ],
+    },
+    theme: { id: 'latex' },
+    blocks: [
+      {
+        id: 'e1',
+        type: 'experience',
+        title: 'ISRO SAC',
+        subtitle: 'Research Intern – AI · Modeling · Ahmedabad, India',
+        dateRange: 'Dec 2024 – July 2025',
+        bullets: ['Saved ₹5,000 & 50% compute'],
+      },
+      { id: 's1', type: 'skills', bullets: ['DevOps & Tools: Docker, Git'] },
+      {
+        id: 'p1',
+        type: 'project',
+        title: 'Vegha',
+        subtitle: 'Python, C++',
+        dateRange: 'Oct 2024',
+        bullets: ['Deployed'],
+        links: [
+          { label: 'GitHub', url: 'https://github.com/v/rl' },
+          { label: 'Live', url: 'https://www.vegha.example.com/app' },
+        ],
+      },
+      { id: 'p2', type: 'project', title: 'NoTech', bullets: ['x'] },
+      { id: 'c1', type: 'custom', title: 'Achievements', bullets: ['Won SIH 2024'] },
+    ],
+  })
+
+  // Preamble spacing variables copied verbatim
+  for (const v of [
+    '\\newlength{\\headernamevspace}\\setlength{\\headernamevspace}{4pt}',
+    '\\newlength{\\projectheadingvspaceaftertitle}\\setlength{\\projectheadingvspaceaftertitle}{-10pt}',
+    '\\newlength{\\aftermultcolvspace}\\setlength{\\aftermultcolvspace}{-10pt}',
+    '\\newlength{\\achievementlistparsep}\\setlength{\\achievementlistparsep}{0pt}',
+  ])
+    expect(tex).toContain(v)
+  expect(tex.match(/\\newlength/g)?.length).toBe(26)
+
+  // Sections in first-appearance order
+  const order = ['Experience', 'Technical Skills', 'Projects', 'Achievements'].map((h) =>
+    tex.indexOf(`\\section{${h}}`),
+  )
+  expect(order.every((i, k) => i > -1 && (k === 0 || i > order[k - 1]!))).toBe(true)
+
+  // Header
+  expect(tex).toContain('{\\Huge VINAYAK YADAV} \\\\[\\headernamevspace]')
+  expect(tex).toContain('\\href{tel:+918303807051}{\\faPhone\\ +91 83038 07051}')
+  expect(tex).toContain('\\href{https://www.linkedin.com/in/v/}{\\faLinkedin\\ linkedin.com/in/v/}')
+  expect(tex).toContain('\\href{https://github.com/v}{\\faGithub\\ github.com/v}')
+
+  // Subheading: subtitle split on the LAST ' · ', dates use --
+  expect(tex).toContain('      {ISRO SAC}{Dec 2024 -- July 2025}\n      {Research Intern – AI · Modeling}{Ahmedabad, India}')
+  expect(tex).toContain('\\resumeItem{Saved Rs. 5,000 \\& 50\\% compute}')
+  expect(tex).not.toContain('₹')
+
+  // Projects: icons, tech line; empty tech line arg for NoTech
+  expect(tex).toContain('\\href{https://github.com/v/rl}{\\color{black}\\small\\faGithub}')
+  expect(tex).toContain('\\faGlobe\\hspace{3pt}\\texttt{vegha.example.com}')
+  expect(tex).toContain('        {Python, C++}')
+  expect(tex).toContain('        {NoTech}\n        {}\n        {}\n        {}')
+
+  expect(tex).toContain('\\textbf{DevOps \\& Tools}{: Docker, Git} \\\\')
+  expect(tex).toContain('\\vspace{\\aftermultcolvspace}')
+  expect(tex).toContain('    \\item Won SIH 2024')
+
+  // Structurally balanced
+  const unescaped = tex.replace(/\\[{}]/g, '')
+  expect(unescaped.split('{').length).toBe(unescaped.split('}').length)
+  for (const env of ['itemize', 'multicols', 'center', 'tabular*', 'document'])
+    expect(tex.split(`\\begin{${env}}`).length).toBe(tex.split(`\\end{${env}}`).length)
+})
+
 test('PDF theme components render to a PDF without throwing', async () => {
   for (const Theme of [AtsResume, ClassicResume, CompactResume]) {
     const buf = await renderToBuffer(<Theme snapshot={snapshot} />)

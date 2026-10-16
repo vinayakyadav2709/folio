@@ -1,5 +1,7 @@
 import type { ResumeSnapshot, ResumeLink, ResumeBlock } from '../types'
 import { groupSections } from '../sections'
+import { customLatex } from './custom'
+import { displayUrl, moreProjects, portfolioLink } from '../latex-look'
 
 const LATEX_ESCAPES: Record<string, string> = {
   '\\': '\\textbackslash{}',
@@ -146,6 +148,7 @@ function skillsSection(heading: string, blocks: ResumeBlock[]): string[] {
 // packages only, no external template. Blocks grouped into sections in the same
 // order as the PDF renderer.
 export function snapshotToLatex(snapshot: ResumeSnapshot): string {
+  if (snapshot.theme.id === 'latex') return customLatex(snapshot)
   const { header, blocks } = snapshot
   const out: string[] = [PREAMBLE, '\\begin{document}', '']
 
@@ -173,6 +176,8 @@ export function snapshotToLatex(snapshot: ResumeSnapshot): string {
       out.push(...(section.type === 'project' ? projectBlock(block) : subheadingBlock(block)))
     }
     out.push('  \\resumeSubHeadingListEnd', '')
+    const more = section.type === 'project' && portfolioLink(header.links)
+    if (more) out.push(`{\\raggedleft\\small ${moreProjects(snapshot.moreProjects)} ${link({ label: displayUrl(more.url), url: more.url })}\\par}`, '')
   }
 
   out.push('\\end{document}', '')

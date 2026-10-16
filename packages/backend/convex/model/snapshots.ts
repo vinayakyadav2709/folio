@@ -62,6 +62,8 @@ const headerFromProfile = (profile: Doc<'profiles'> | null): Header => ({
   phone: profile?.phone || undefined,
   location: profile?.location || undefined,
   links: [
+    // public portfolio page — exports repeat the "Portfolio" link under Projects
+    profile?.username && process.env.SITE_URL && { label: 'Portfolio', url: `${process.env.SITE_URL}/u/${profile.username}` },
     profile?.githubUrl && { label: 'GitHub', url: profile.githubUrl },
     profile?.linkedinUrl && { label: 'LinkedIn', url: profile.linkedinUrl },
     profile?.websiteUrl && { label: 'Website', url: profile.websiteUrl },

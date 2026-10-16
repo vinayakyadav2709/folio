@@ -3,14 +3,16 @@ import { Link } from '@tanstack/react-router'
 import { useMutation, useQuery } from 'convex/react'
 import { api } from '@folio/backend/api'
 import type { Doc, Id } from '@folio/backend/dataModel'
-import { ArrowLeftIcon, GitBranchIcon, GitCommitHorizontalIcon, PencilIcon } from 'lucide-react'
+import { ArrowLeftIcon, EyeIcon, GitBranchIcon, GitCommitHorizontalIcon, PencilIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogPopup, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTab } from '@/components/ui/tabs'
 import { BlockLibrary } from './block-library'
 import { Canvas } from './canvas'
 import { ExportMenu } from './export-menu'
+import { Preview } from './preview'
 import { SidePanel } from './side-panel'
 import { headerFromProfile, isHeaderEmpty, type Snapshot } from '../lib/blocks'
 import { errorMessage } from '../lib/errors'
@@ -258,6 +260,17 @@ function EditorInner({
               <GitCommitHorizontalIcon />
               Commit
             </Button>
+            {/* The whole page at its real A4 size (4/3 px per pt), shrunk only on narrow screens. */}
+            <Dialog>
+              <DialogTrigger render={<Button size="sm" variant="outline" />}>
+                <EyeIcon />
+                Preview
+              </DialogTrigger>
+              <DialogPopup className="max-w-[calc(794px+2rem)] overflow-y-auto p-4 pt-12">
+                <DialogTitle className="sr-only">Resume preview</DialogTitle>
+                <Preview blocks={blocks} header={header} theme={theme} maxScale={4 / 3} />
+              </DialogPopup>
+            </Dialog>
             <ExportMenu
               blocks={blocks}
               header={header}

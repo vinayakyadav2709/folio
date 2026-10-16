@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { PlusIcon, XIcon } from 'lucide-react'
+import { ChevronDownIcon, ChevronUpIcon, PlusIcon, XIcon } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -87,18 +87,23 @@ export function MicroField({
 /**
  * One entry. `rail` holds the *when / where* metadata, `children` the *what*.
  * The stagger is capped so appending a row still lands quickly.
+ * `onMove(to)` + `total` add up/down reordering beside the index.
  */
 export function EntryCard({
   index,
+  total,
   rail,
   removeLabel,
   onRemove,
+  onMove,
   children,
 }: {
   index: number
+  total?: number
   rail: ReactNode
   removeLabel: string
   onRemove: () => void
+  onMove?: (to: number) => void
   children: ReactNode
 }) {
   return (
@@ -107,9 +112,35 @@ export function EntryCard({
       className="group/entry @3xl:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] relative grid animate-entry gap-x-8 gap-y-5 rounded-2xl border border-border/60 bg-card/30 p-5 transition-colors duration-200 hover:border-foreground/20"
     >
       <aside className="@3xl:border-border/50 @3xl:border-r @3xl:pr-8 flex flex-col gap-3.5">
-        <span className="font-mono text-[10px] text-muted-foreground/60 uppercase tabular-nums tracking-[0.3em]">
-          {String(index + 1).padStart(2, '0')}
-        </span>
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-mono text-[10px] text-muted-foreground/60 uppercase tabular-nums tracking-[0.3em]">
+            {String(index + 1).padStart(2, '0')}
+          </span>
+          {onMove && total && total > 1 ? (
+            <span className="flex">
+              <Button
+                size="icon-xs"
+                variant="ghost"
+                aria-label="Move up"
+                disabled={index === 0}
+                onClick={() => onMove(index - 1)}
+                className="text-muted-foreground active:scale-[0.96]"
+              >
+                <ChevronUpIcon />
+              </Button>
+              <Button
+                size="icon-xs"
+                variant="ghost"
+                aria-label="Move down"
+                disabled={index === total - 1}
+                onClick={() => onMove(index + 1)}
+                className="text-muted-foreground active:scale-[0.96]"
+              >
+                <ChevronDownIcon />
+              </Button>
+            </span>
+          ) : null}
+        </div>
         {rail}
       </aside>
       <div className="flex min-w-0 flex-col gap-4">{children}</div>
