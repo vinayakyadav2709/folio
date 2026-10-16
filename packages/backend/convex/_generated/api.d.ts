@@ -47,7 +47,6 @@ import type * as portfolio from "../portfolio.js";
 import type * as profiles from "../profiles.js";
 import type * as projects from "../projects.js";
 import type * as resumes from "../resumes.js";
-import type * as seedPortfolio from "../seedPortfolio.js";
 import type * as snapshots from "../snapshots.js";
 import type * as teams from "../teams.js";
 
@@ -97,7 +96,6 @@ declare const fullApi: ApiFromModules<{
   profiles: typeof profiles;
   projects: typeof projects;
   resumes: typeof resumes;
-  seedPortfolio: typeof seedPortfolio;
   snapshots: typeof snapshots;
   teams: typeof teams;
 }>;
