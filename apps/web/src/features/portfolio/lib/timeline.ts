@@ -44,7 +44,7 @@ export function timeline(d: Profile): Entry[] {
   const rows: Entry[] = [
     ...d.experience.map((x, i) => ({
       key: `x${i}`,
-      name: short(x.company),
+      name: x.company, // full: "(under Dr. …)" / "(Karobaar)" carry meaning
       kind: x.role ? short(x.role) : '',
       group: 'Work' as const,
       from: x.startDate,
