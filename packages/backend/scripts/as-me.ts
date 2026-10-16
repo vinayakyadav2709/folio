@@ -2,7 +2,9 @@
 // auth-checked public API (no temporary deploys, no internal functions).
 //
 //   bun scripts/as-me.ts scripts/tasks/<task>.ts            # prod
-//   SITE=http://127.0.0.1:4100 CONVEX_URL=<dev .convex.cloud> bun scripts/as-me.ts <task>
+//   AS_ME_SITE=http://127.0.0.1:4100 AS_ME_CONVEX_URL=<dev .convex.cloud> bun scripts/as-me.ts <task>
+//
+// Own env names on purpose: Bun auto-loads .env.local, whose CONVEX_URL is the dev deployment.
 //
 // Prompts for email + password; they are sent only to SITE's sign-in endpoint
 // and never stored. A task default-exports `async ({ client, api }) => …`.
@@ -10,8 +12,8 @@ import path from 'node:path'
 import { ConvexHttpClient } from 'convex/browser'
 import { api } from '../convex/_generated/api'
 
-const SITE = process.env.SITE ?? 'https://folio.gandivalabs.com'
-const CONVEX_URL = process.env.CONVEX_URL ?? 'https://giddy-dogfish-683.convex.cloud'
+const SITE = process.env.AS_ME_SITE ?? 'https://folio.gandivalabs.com'
+const CONVEX_URL = process.env.AS_ME_CONVEX_URL ?? 'https://giddy-dogfish-683.convex.cloud'
 
 const taskPath = process.argv[2]
 if (!taskPath) throw new Error('usage: bun scripts/as-me.ts <task.ts>')
@@ -64,7 +66,7 @@ if (!token) throw new Error(`could not get a Convex token: ${tokenRes.status}`)
 const client = new ConvexHttpClient(CONVEX_URL)
 client.setAuth(token)
 const me = await client.query(api.profiles.getMyProfile, {})
-console.log(`Signed in as ${me?.fullName ?? email} (@${me?.username ?? '?'}) on ${SITE}\n`)
+console.log(`Signed in as ${me?.fullName ?? email} (@${me?.username ?? '?'}) on ${SITE} → ${CONVEX_URL}\n`)
 
 await task({ client, api })
 console.log('\nDone.')
