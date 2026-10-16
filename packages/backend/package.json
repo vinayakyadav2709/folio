@@ -15,7 +15,8 @@
   "scripts": {
     "dev": "CONVEX_AGENT_MODE=anonymous convex dev",
     "codegen": "convex codegen",
-    "typecheck": "tsc --noEmit -p convex"
+    "typecheck": "tsc --noEmit -p convex",
+    "as-me": "bun scripts/as-me.ts"
   },
   "dependencies": {
     "@convex-dev/better-auth": "^0.12.2",
