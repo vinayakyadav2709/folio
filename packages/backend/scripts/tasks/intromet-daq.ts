@@ -11,8 +11,8 @@ const DAQ = {
   company: 'SPIT (under Dr. Y. S. Rao)',
   role: 'Software Developer, Industrial DAQ System',
   location: 'Mumbai, India',
-  startDate: '2023',
-  endDate: '2023',
+  startDate: 'Jan 2024', // 2nd → 3rd semester, just before ISRO
+  endDate: 'Nov 2024',
   bullets: [
     'Built an industrial data-acquisition system end to end: embedded C firmware, a Python GUI and cross-platform communication protocols',
   ],
