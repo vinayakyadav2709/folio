@@ -378,14 +378,17 @@ body {
 }
 
 /* Right column: time-proportional timeline (timeline-graph.tsx), lg+ only. */
-.pf { --pf-rule: color-mix(in oklab, var(--pf-fg) 32%, var(--pf-bg)); --pf-accent: #c4532a; }
-.pf[data-theme='dark'] { --pf-accent: #e07a4c; }
-@media (prefers-color-scheme: dark) { .pf:not([data-theme='light']) { --pf-accent: #e07a4c; } }
+.pf { --pf-rule: color-mix(in oklab, var(--pf-fg) 32%, var(--pf-bg)); --pf-accent: #c4532a; --pf-work: #4c6a9e; }
+.pf[data-theme='dark'] { --pf-accent: #e07a4c; --pf-work: #87a3d4; }
+@media (prefers-color-scheme: dark) { .pf:not([data-theme='light']) { --pf-accent: #e07a4c; --pf-work: #87a3d4; } }
 @media (min-width: 1024px) { .pf-row[data-on] .pf-name { text-decoration: underline 1px; text-underline-offset: 5px; } }
 .pf-graph { position: absolute; inset: 12px 0; }
 .pf-graph svg { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
 .pf-graph path { fill: none; stroke: var(--pf-rule); stroke-width: 1px; vector-effect: non-scaling-stroke; transition: stroke 150ms ease; }
+/* experience lanes get their own hue; education stays on the neutral rule; ongoing = accent */
+.pf-graph path[data-work] { stroke: var(--pf-work); }
 .pf-graph path[data-live] { stroke: var(--pf-accent); }
+.pf-graph .pf-spine { stroke: color-mix(in oklab, var(--pf-fg) 58%, var(--pf-bg)); stroke-width: 1.75px; }
 .pf-graph .pf-hit { stroke: transparent; stroke-width: 10px; pointer-events: stroke; cursor: pointer; }
 .pf-graph .pf-g { transition: opacity 200ms ease; }
 .pf-graph[data-active] .pf-g:not([data-on]) { opacity: 0.35; }
